@@ -1,0 +1,16 @@
+name = "backorder-domain-monitor"
+main = "src/index.ts"
+compatibility_date = "2025-02-01"
+workers_dev = true
+
+[triggers]
+crons = ["0 * * * *"] # hourly (24x/day)
+
+[[d1_databases]]
+binding = "DB"
+database_name = "backorder_d1"
+database_id = "REPLACE_WITH_YOUR_D1_ID"
+migrations_dir = "migrations"
+
+[vars]
+CORS_ORIGIN = "https://example.com"

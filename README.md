@@ -29,7 +29,7 @@ Backorder is a production‑ready, always‑free **domain availability (backorde
 
 ## Features
 
-- Admin sign‑in (single admin) with secure password hashing (**PBKDF2 100k** for Workers compatibility)
+- Admin sign‑in (single admin) with secure password hashing (**PBKDF2 100k**) and hashed session tokens in storage
 - Domain list: add / delete / enable / disable
 - Per‑domain interval selector (default 60 min)
 - **Force** button triggers an immediate check
@@ -61,8 +61,11 @@ See **docs/SETUP.md** for full setup.
 ## Security notes
 
 - Secrets are stored only in Cloudflare (Wrangler secrets). **Never commit secrets to GitHub.**
-- Recommended hardening:
-  - Rate‑limit `/api/login` in Cloudflare (e.g., 5 req/min per IP)
+- Built-in hardening:
+  - `/api/login` rate limit (5 failed attempts/min per IP, temporary block)
+  - Session cookie uses `__Host-` prefix, `HttpOnly`, `Secure`, `SameSite=Lax`
+- Recommended additional hardening:
+  - Add Cloudflare WAF rate limit rules in front of the Worker
   - Use a custom domain so UI + API share the same site (simpler cookies/CORS)
 
 ---

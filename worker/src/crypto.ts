@@ -54,3 +54,9 @@ export function randomToken(): string {
   const bytes = randomBytes(32);
   return b64(bytes).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }
+
+export async function sha256Base64Url(input: string): Promise<string> {
+  const enc = new TextEncoder();
+  const digest = await crypto.subtle.digest("SHA-256", enc.encode(input));
+  return b64(new Uint8Array(digest)).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+}

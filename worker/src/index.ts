@@ -2,13 +2,14 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Env } from "./types";
 import { ensureAdmin, addEvent, listDomains, listEvents, nowSec, getDomainById, getDomainByName } from "./db";
-import { requireAuth, login as doLogin, logout as doLogout, getSessionTokenFromRequest } from "./auth";
+import { requireAuth, login as doLogin, logout as doLogout, getSessionTokenFromRequest, SESSION_COOKIE_NAME } from "./auth";
 import { runScheduler } from "./scheduler";
+import { checkLoginRateLimit, clearLoginFailures, getClientIp, registerLoginFailure } from "./rateLimit";
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", cors({
-  origin: c.env.CORS_ORIGIN,
+  origin: (_origin, c) => c.env.CORS_ORIGIN,
   credentials: true
 }));
 
@@ -26,21 +27,30 @@ app.get("/api/me", async (c) => {
 
 app.post("/api/login", async (c) => {
   await ensureAdmin(c.env);
+  const ip = getClientIp(c.req.raw);
+  const now = nowSec();
+  const rateLimit = await checkLoginRateLimit(c.env, ip, now);
+  if (!rateLimit.ok) {
+    c.header("Retry-After", String(rateLimit.retryAfterSec ?? 60));
+    return c.json({ ok: false, error: "Too many attempts. Try again later." }, 429);
+  }
+
   const body = await c.req.json().catch(() => null) as { email?: string; password?: string } | null;
   if (!body?.email || !body?.password) return c.json({ ok: false, error: "Missing email/password" }, 400);
 
   const res = await doLogin(c.env, body.email, body.password);
   if (!res) {
-    await addEvent(c.env, null, "auth", `Failed login attempt for ${body.email}`);
+    await registerLoginFailure(c.env, ip, nowSec());
+    await addEvent(c.env, null, "auth", `Failed login attempt for ${body.email} (ip=${ip})`);
     return c.json({ ok: false, error: "Invalid credentials" }, 401);
   }
 
-  await addEvent(c.env, null, "auth", `Login success for ${body.email}`);
-  // Cookie for browser usage
+  await clearLoginFailures(c.env, ip);
+  await addEvent(c.env, null, "auth", `Login success for ${body.email} (ip=${ip})`);
   c.header(
-  "Set-Cookie",
-  `bo_session=${encodeURIComponent(res.token)}; Path=/; Max-Age=${60*60*24*7}; HttpOnly; SameSite=None; Secure`
-);
+    "Set-Cookie",
+    `${SESSION_COOKIE_NAME}=${encodeURIComponent(res.token)}; Path=/; Max-Age=${60 * 60 * 24 * 7}; HttpOnly; SameSite=Lax; Secure`
+  );
 
   return c.json({ ok: true, token: res.token });
 });
@@ -49,7 +59,7 @@ app.post("/api/logout", async (c) => {
   await ensureAdmin(c.env);
   const token = getSessionTokenFromRequest(c.req.raw);
   if (token) await doLogout(c.env, token);
-  c.header("Set-Cookie", "bo_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax");
+  c.header("Set-Cookie", `${SESSION_COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`);
   return c.json({ ok: true });
 });
 

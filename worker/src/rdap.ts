@@ -21,7 +21,22 @@ const RDAP_PROVIDERS = [
 const TLD_SPECIFIC_PROVIDERS: Record<string, string> = {
   "com": "https://rdap.verisign.com/com/v1/domain/",
   "net": "https://rdap.verisign.com/net/v1/domain/",
-  "org": "https://rdap.publicinterestregistry.net/rdap/domain/"
+  "org": "https://rdap.publicinterestregistry.net/rdap/domain/",
+  "de": "https://rdap.denic.de/",
+  "ch": "https://rdap.nic.ch/",
+  "li": "https://rdap.nic.li/",
+  "my": "https://rdap.mynic.my/rdap/",
+  "me": "https://rdap.identitydigital.services/rdap/",
+  "io": "https://rdap.identitydigital.services/rdap/",
+  "sh": "https://rdap.identitydigital.services/rdap/",
+  "ac": "https://rdap.identitydigital.services/rdap/",
+  "sk": "https://rdap.sk-nic.sk/sk/",
+  "co": "https://rdap.registry.co/co/",
+  "uz": "https://rdap.cctld.uz/",
+  "kg": "https://rdap.cctld.kg/",
+  "si": "https://rdap.register.si/",
+  "ve": "https://rdap.nic.ve/rdap/",
+  "tz": "https://whois.tznic.or.tz/rdap/"
 };
 
 export async function checkDomain(env: Env, domainIn: string): Promise<RdapResult> {

@@ -11,7 +11,8 @@ export function statusPill(status: string | null) {
     rate_limited: "border-amber-300/20 bg-amber-400/15 text-amber-200",
     error: "border-rose-300/20 bg-rose-400/15 text-rose-200"
   };
-  return map[s] || map.unknown;
+  const base = "inline-flex items-center justify-center w-20 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shrink-0";
+  return classNames(base, map[s] || map.unknown);
 }
 
 export function eventPill(type: string) {
@@ -24,5 +25,6 @@ export function eventPill(type: string) {
     error: "border-rose-300/20 bg-rose-400/15 text-rose-200",
     auth: "border-fuchsia-300/20 bg-fuchsia-400/15 text-fuchsia-200"
   };
-  return map[t] || map.info;
+  const base = "inline-flex items-center justify-center w-16 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shrink-0";
+  return classNames(base, map[t] || map.info);
 }

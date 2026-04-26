@@ -52,11 +52,24 @@ export async function runScheduler(env: Env): Promise<{ checked: number; due: nu
           }
         }
 
+        let expiresAt: number | null = null;
+        if (status === "registered" && res.payload) {
+          const events = (res.payload as any).events || [];
+          const expiryEvent = events.find((e: any) => e.eventAction === "expiration");
+          if (expiryEvent && expiryEvent.eventDate) {
+            try {
+              expiresAt = Math.floor(new Date(expiryEvent.eventDate).getTime() / 1000);
+            } catch {
+              expiresAt = null;
+            }
+          }
+        }
+
         const next = now + nextIntervalMin * 60;
 
         await env.DB.prepare(
-          "UPDATE domains SET last_status=?, last_rdap_http=?, last_error=NULL, consecutive_errors=0, next_check_at=? WHERE id=?"
-        ).bind(status, res.http, next, d.id).run();
+          "UPDATE domains SET last_status=?, last_rdap_http=?, last_error=NULL, consecutive_errors=0, next_check_at=?, expires_at=? WHERE id=?"
+        ).bind(status, res.http, next, expiresAt, d.id).run();
 
         if (status !== prev) {
           await addEvent(env, d.id, status, `${d.domain} status changed: ${prev} -> ${status} (HTTP ${res.http})`);

@@ -281,6 +281,7 @@ function Shell() {
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Next</th>
                       <th className="px-4 py-3">Interval</th>
+                      <th className="px-4 py-3">Expires</th>
                       <th className="px-4 py-3">Last Check</th>
                       <th className="px-4 py-3">Actions</th>
                     </tr>
@@ -313,6 +314,19 @@ function Shell() {
                               <option key={m} value={m}>{m} min</option>
                             ))}
                           </select>
+                        </td>
+                        <td className="px-4 py-3">
+                          {d.expires_at ? (
+                            <div className={classNames(
+                              "font-medium",
+                              (d.expires_at - now < 86400 * 30) ? "text-rose-400" : "text-emerald-400"
+                            )}>
+                              {fmtTime(d.expires_at).split(",")[0]}
+                              <div className="text-[10px] opacity-70">
+                                {Math.ceil((d.expires_at - now) / 86400)} days left
+                              </div>
+                            </div>
+                          ) : "—"}
                         </td>
                         <td className="px-4 py-3">
                           <div className="text-zinc-200">{fmtTime(d.last_checked_at)}</div>

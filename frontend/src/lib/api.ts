@@ -11,8 +11,8 @@ export type Domain = {
   last_status: string | null;
   last_rdap_http: number | null;
   last_error: string | null;
-  consecutive_errors: number;
   created_at: number;
+  expires_at: number | null;
 };
 
 export type Event = {

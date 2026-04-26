@@ -21,6 +21,7 @@ export type DomainRow = {
   last_error: string | null;
   consecutive_errors: number;
   created_at: number;
+  expires_at: number | null;
 };
 
 export type EventRow = {

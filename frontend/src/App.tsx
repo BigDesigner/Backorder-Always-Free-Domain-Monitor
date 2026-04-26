@@ -123,6 +123,7 @@ function Shell() {
 
   async function removeDomain(d: Domain) {
     if (!confirm(`Remove ${d.domain}?`)) return;
+    toast.push(`Removing ${d.domain}...`);
     await api.deleteDomain(d.id).catch((e:any) => toast.push(e?.message || "Failed"));
     await refreshAll();
   }
@@ -281,9 +282,9 @@ function Shell() {
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Next</th>
                       <th className="px-4 py-3">Interval</th>
-                      <th className="px-4 py-3">Expires</th>
+                      <th className="px-4 py-3 text-emerald-400">Expires</th>
                       <th className="px-4 py-3">Last Check</th>
-                      <th className="px-4 py-3">Actions</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -344,7 +345,7 @@ function Shell() {
                     ))}
                     {domains.length === 0 && (
                       <tr>
-                        <td className="px-4 py-8 text-zinc-400" colSpan={6}>
+                        <td className="px-4 py-8 text-zinc-400" colSpan={7}>
                           No domains yet. Click <span className="font-semibold text-zinc-200">+ Add</span> to start monitoring.
                         </td>
                       </tr>

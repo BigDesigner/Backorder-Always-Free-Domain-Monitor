@@ -10,16 +10,47 @@ function normalizeDomain(input: string): string {
   return input.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
 }
 
+const RDAP_PROVIDERS = [
+  "https://rdap.org/domain/",
+  "https://rdap.nic.google/domain/",
+  "https://rdap.db.ripe.net/domain/",
+  "https://rdap.apnic.net/domain/",
+  "https://rdap.iana.org/domain/"
+];
+
+const TLD_SPECIFIC_PROVIDERS: Record<string, string> = {
+  "com": "https://rdap.verisign.com/com/v1/domain/",
+  "net": "https://rdap.verisign.com/net/v1/domain/",
+  "org": "https://rdap.publicinterestregistry.net/rdap/domain/",
+  "tr": "https://rdap.tr/domain/" // Dummy example, depends on actual TR RDAP support
+};
+
 export async function checkDomain(env: Env, domainIn: string): Promise<RdapResult> {
   const domain = normalizeDomain(domainIn);
-  const base = (env.RDAP_BASE && env.RDAP_BASE.trim()) || "https://rdap.org/domain/";
+  const tld = domain.split(".").pop() || "";
+
+  // 1. Pick a base URL
+  let base = env.RDAP_BASE?.trim();
+  if (!base) {
+    // If it's a popular TLD, try direct provider first to avoid rdap.org redirection overhead
+    if (TLD_SPECIFIC_PROVIDERS[tld]) {
+      base = TLD_SPECIFIC_PROVIDERS[tld];
+    } else {
+      // Rotate between public general providers
+      base = RDAP_PROVIDERS[Math.floor(Math.random() * RDAP_PROVIDERS.length)];
+    }
+  }
+
   const url = base.endsWith("/") ? base + domain : base + "/" + domain;
+
+  // [SAFE-02] Smart Jitter: Add a random delay (100ms - 1500ms) to avoid pattern detection
+  await new Promise(r => setTimeout(r, 100 + Math.random() * 1400));
 
   // Conservative headers
   const resp = await fetch(url, {
     headers: {
       "accept": "application/json",
-      "user-agent": "backorder-domain-monitor/1.0 (Cloudflare Worker)"
+      "user-agent": "Mozilla/5.0 (compatible; BackorderMonitor/1.0; +https://gnn.tr)"
     }
   });
 

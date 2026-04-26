@@ -10,7 +10,7 @@
 - [x] Security Hardening (PBKDF2, Secure Cookies)
 
 ## In Progress
-- [ ] **[TEST-01]** Telegram & Discord Notification Verification
+- [x] **[TEST-01]** Telegram & Discord Notification Verification
 - [ ] **[SAFE-01]** RDAP Source Rotation (Multiple Endpoints)
 - [ ] **[SAFE-02]** Smart Jitter & Randomization for anti-bot protection
 

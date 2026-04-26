@@ -139,7 +139,7 @@ app.patch("/api/domains/:id", async (c) => {
   return c.json({ ok: true, domain: d2 });
 });
 
-app.delete("/api/domains/:id", async (c) => {
+app.post("/api/domains/:id/delete", async (c) => {
   await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);

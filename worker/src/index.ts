@@ -80,7 +80,8 @@ app.post("/api/domains", async (c) => {
 
   const intervalMin = Math.max(30, Math.min(24*60, Math.floor(body?.intervalMin ?? 60)));
   const now = nowSec();
-  const next = now + intervalMin * 60;
+  // Set next_check_at to NOW so it gets picked up immediately
+  const next = now;
 
   await c.env.DB.prepare(
     "INSERT INTO domains(domain, label, enabled, check_interval_min, next_check_at, last_checked_at, last_status, created_at) VALUES(?,?,?,?,?,?,?,?)"
@@ -121,15 +122,13 @@ app.patch("/api/domains/:id", async (c) => {
     updates.push("next_check_at = ?");
     binds.push(nowSec());
   }
-  if (body?.forceCheck) {
-  await runScheduler(c.env);
-}
-
-
-  if (updates.length === 0) return c.json({ ok: false, error: "No changes" }, 400);
-
   binds.push(id);
   await c.env.DB.prepare(`UPDATE domains SET ${updates.join(", ")} WHERE id = ?`).bind(...binds).run();
+
+  if (body?.forceCheck) {
+    // Run scheduler AFTER the database has been updated
+    await runScheduler(c.env);
+  }
 
   await addEvent(c.env, id, "info", `Domain updated by ${user.email}: ${d.domain}`);
   const d2 = await getDomainById(c.env, id);

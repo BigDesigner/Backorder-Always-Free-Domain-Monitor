@@ -11,8 +11,8 @@
 
 ## In Progress
 - [x] **[TEST-01]** Telegram & Discord Notification Verification
-- [ ] **[SAFE-01]** RDAP Source Rotation (Multiple Endpoints)
-- [ ] **[SAFE-02]** Smart Jitter & Randomization for anti-bot protection
+- [x] **[SAFE-01]** RDAP Source Rotation (Multiple Endpoints)
+- [x] **[SAFE-02]** Smart Jitter & Randomization for anti-bot protection
 
 ## Future Roadmap (Next Actions)
 - [ ] **[FEAT-01]** Lifecycle-Aware Interval Scaling (Slower normally, smarter near drop)

@@ -22,7 +22,7 @@ const TLD_SPECIFIC_PROVIDERS: Record<string, string> = {
   "com": "https://rdap.verisign.com/com/v1/domain/",
   "net": "https://rdap.verisign.com/net/v1/domain/",
   "org": "https://rdap.publicinterestregistry.net/rdap/domain/",
-  "tr": "https://rdap.tr/domain/"
+  "tr": "https://rdap.trabis.gov.tr/domain/"
 };
 
 export async function checkDomain(env: Env, domainIn: string): Promise<RdapResult> {

@@ -34,7 +34,25 @@ export async function runScheduler(env: Env): Promise<{ checked: number; due: nu
       if (res.ok) {
         const prev = d.last_status || "unknown";
         const status = res.status;
-        const next = now + clamp(d.check_interval_min, 30, 24*60) * 60;
+        let nextIntervalMin = clamp(d.check_interval_min, 30, 24*60);
+
+        // [FEAT-01] Dynamic Scaling based on Lifecycle
+        if (status === "registered" && res.payload) {
+          const rdapStatus = (res.payload as any).status || [];
+          const isPendingDelete = rdapStatus.some((s: string) => s.toLowerCase().includes("pending delete"));
+          const isRedemption = rdapStatus.some((s: string) => s.toLowerCase().includes("redemption"));
+
+          if (isPendingDelete) {
+            // Speed up to 15 mins (very aggressive but safe for most RDAP)
+            nextIntervalMin = 15;
+            await addEvent(env, d.id, "info", `⚡ Speeding up! ${d.domain} is in PENDING DELETE. Checking every 15m.`);
+          } else if (isRedemption) {
+            // Speed up to 60 mins if user set it slower
+            nextIntervalMin = Math.min(nextIntervalMin, 60);
+          }
+        }
+
+        const next = now + nextIntervalMin * 60;
 
         await env.DB.prepare(
           "UPDATE domains SET last_status=?, last_rdap_http=?, last_error=NULL, consecutive_errors=0, next_check_at=? WHERE id=?"

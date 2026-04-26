@@ -16,6 +16,6 @@
 
 ## Future Roadmap (Next Actions)
 - [x] **[FEAT-01]** Lifecycle-Aware Interval Scaling (Slower normally, smarter near drop)
-- [ ] **[FEAT-02]** Expiry Date Tracking (Extract and show in UI)
+- [x] **[FEAT-02]** Expiry Date Tracking (Extract and show in UI)
 - [ ] **[UI-01]** Safety/Health Dashboard Indicator
 - [ ] **[FEAT-03]** Bulk Domain Import (Text/CSV)

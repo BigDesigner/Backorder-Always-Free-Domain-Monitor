@@ -437,6 +437,17 @@ function Shell() {
                 <li>• Use a strong admin password and rotate periodically.</li>
                 <li>• Consider using a dedicated RDAP base per TLD if needed.</li>
               </ul>
+              <div className="sep my-5" />
+              <button className="btn w-full py-3 bg-white/10 hover:bg-white/20" onClick={async () => {
+                try {
+                  await api.testNotify();
+                  toast.push("Test notification sent!");
+                } catch (e: any) {
+                  toast.push(e.message || "Failed to send");
+                }
+              }}>
+                🔔 Send Test Notification
+              </button>
             </div>
           </div>
         )}

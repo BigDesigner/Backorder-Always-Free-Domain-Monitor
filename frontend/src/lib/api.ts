@@ -49,7 +49,8 @@ export const api = {
   addDomain: (domain: string, label?: string, intervalMin?: number) => req<{ok:boolean;domain:Domain}>(`/api/domains`, { method: "POST", body: JSON.stringify({ domain, label, intervalMin }) }),
   patchDomain: (id: number, patch: any) => req<{ok:boolean;domain:Domain}>(`/api/domains/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   deleteDomain: (id: number) => req<{ok:boolean}>(`/api/domains/${id}`, { method: "DELETE" }),
-  events: (limit = 200) => req<{ok:boolean;events:Event[]}>(`/api/events?limit=${limit}`)
+  events: (limit = 200) => req<{ok:boolean;events:Event[]}>(`/api/events?limit=${limit}`),
+  testNotify: () => req<{ok:boolean}>(`/api/test-notify`, { method: "POST", body: JSON.stringify({}) })
 };
 
 export function fmtTime(tsSec: number | null | undefined): string {

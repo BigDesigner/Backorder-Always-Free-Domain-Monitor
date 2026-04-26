@@ -160,6 +160,16 @@ app.get("/api/events", async (c) => {
   return c.json({ ok: true, events });
 });
 
+app.post("/api/test-notify", async (c) => {
+  await ensureAdmin(c.env);
+  const user = await requireAuth(c.env, c.req.raw);
+  if (!user) return c.json({ ok: false }, 401);
+
+  const { notifyAll } = await import("./notify");
+  await notifyAll(c.env, `🔔 Backorder Test: This is a manual notification test from ${user.email}. System is ready!`);
+  return c.json({ ok: true });
+});
+
 // Cron trigger
 export default {
   fetch: app.fetch,

@@ -10,11 +10,12 @@
 - [x] Security Hardening (PBKDF2, Secure Cookies)
 
 ## In Progress
-- [ ] Operational testing of the notification systems (Telegram/Discord)
+- [ ] **[TEST-01]** Telegram & Discord Notification Verification
+- [ ] **[SAFE-01]** RDAP Source Rotation (Multiple Endpoints)
+- [ ] **[SAFE-02]** Smart Jitter & Randomization for anti-bot protection
 
 ## Future Roadmap (Next Actions)
-- [ ] **WHOIS Fallback:** Support for TLDs that don't have robust RDAP servers.
-- [ ] **Bulk Import:** Add a "Bulk Add" feature for domain lists.
-- [ ] **Domain Expiry Info:** Try to parse and display the expiration date from RDAP data.
-- [ ] **Multi-User Support:** Allow multiple admin accounts with different permissions.
-- [ ] **Mobile App:** Simple PWA (Progressive Web App) manifest for mobile usage.
+- [ ] **[FEAT-01]** Lifecycle-Aware Interval Scaling (Slower normally, smarter near drop)
+- [ ] **[FEAT-02]** Expiry Date Tracking (Extract and show in UI)
+- [ ] **[UI-01]** Safety/Health Dashboard Indicator
+- [ ] **[FEAT-03]** Bulk Domain Import (Text/CSV)

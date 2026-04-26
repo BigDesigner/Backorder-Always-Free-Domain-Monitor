@@ -88,7 +88,11 @@ app.post("/api/domains", async (c) => {
   ).bind(domain, body?.label ?? null, 1, intervalMin, next, null, "unknown", now).run();
 
   const row = await getDomainByName(c.env, domain);
-  if (row) await addEvent(c.env, row.id, "info", `Domain added by ${user.email}: ${domain} (interval ${intervalMin}m)`);
+  if (row) {
+    await addEvent(c.env, row.id, "info", `Domain added by ${user.email}: ${domain} (interval ${intervalMin}m)`);
+    // Run scheduler immediately after add
+    await runScheduler(c.env);
+  }
   return c.json({ ok: true, domain: row });
 });
 

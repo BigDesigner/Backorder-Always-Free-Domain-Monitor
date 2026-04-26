@@ -1,0 +1,474 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { api, Domain, Event, fmtTime, relEta } from "./lib/api";
+import { classNames, statusPill, eventPill } from "./lib/ui";
+import { Modal } from "./components/Modal";
+import { ToastProvider, useToast } from "./components/Toast";
+
+function Shell() {
+	useEffect(() => {
+  const t = setInterval(() => {
+    window.location.reload();
+  }, 300_000); // 300 seconds
+
+  return () => clearInterval(t);
+}, []);
+	
+  const toast = useToast();
+
+  const [authed, setAuthed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [domains, setDomains] = useState<Domain[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [now, setNow] = useState<number>(Math.floor(Date.now()/1000));
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [newDomain, setNewDomain] = useState("");
+  const [newLabel, setNewLabel] = useState("");
+  const [newInterval, setNewInterval] = useState(60);
+
+  const [tab, setTab] = useState<"dashboard" | "activity" | "about">("dashboard");
+
+  async function refreshAll() {
+    try {
+      const d = await api.domains();
+      setDomains(d.domains || []);
+      setNow(d.now || Math.floor(Date.now()/1000));
+      const e = await api.events(250);
+      setEvents(e.events || []);
+    } catch (err) {
+      console.error("Refresh failed", err);
+      setAuthed(false);
+    }
+  }
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await api.health();
+        await api.me();
+        setAuthed(true);
+        await refreshAll();
+      } catch {
+        setAuthed(false);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!authed) return;
+    const t = setInterval(() => refreshAll().catch(() => {}), 30_000);
+    return () => clearInterval(t);
+  }, [authed]);
+
+  const stats = useMemo(() => {
+    const safeDomains = domains || [];
+    const total = safeDomains.length;
+    const enabled = safeDomains.filter(d => d.enabled === 1).length;
+    const available = safeDomains.filter(d => (d.last_status || "").toLowerCase() === "available").length;
+    const rateLimited = safeDomains.filter(d => (d.last_status || "") === "rate_limited").length;
+    const errors = safeDomains.filter(d => (d.last_status || "") === "error").length;
+    return { total, enabled, available, rateLimited, errors };
+  }, [domains]);
+
+  async function doLogin() {
+    try {
+      await api.login(email, password);
+      setAuthed(true);
+      toast.push("Signed in.");
+      await refreshAll();
+    } catch (e: any) {
+      toast.push(e?.message || "Login failed");
+    }
+  }
+
+  async function doLogout() {
+    await api.logout().catch(() => {});
+    setAuthed(false);
+    setDomains([]);
+    setEvents([]);
+    toast.push("Signed out.");
+  }
+
+  async function addDomain() {
+    try {
+      const dom = newDomain.trim();
+      await api.addDomain(dom, newLabel.trim() || undefined, newInterval);
+      toast.push("Domain added.");
+      setAddOpen(false);
+      setNewDomain("");
+      setNewLabel("");
+      setNewInterval(60);
+      await refreshAll();
+    } catch (e: any) {
+      toast.push(e?.message || "Failed");
+    }
+  }
+
+  async function toggleDomain(d: Domain) {
+    await api.patchDomain(d.id, { enabled: d.enabled !== 1 }).catch((e:any) => toast.push(e?.message || "Failed"));
+    await refreshAll();
+  }
+
+  async function forceCheck(d: Domain) {
+    await api.patchDomain(d.id, { forceCheck: true }).catch((e:any) => toast.push(e?.message || "Failed"));
+    toast.push("Forced check queued.");
+    await refreshAll();
+  }
+
+  async function removeDomain(d: Domain) {
+    if (!confirm(`Remove ${d.domain}?`)) return;
+    await api.deleteDomain(d.id).catch((e:any) => toast.push(e?.message || "Failed"));
+    await refreshAll();
+  }
+
+  async function setIntervalMin(d: Domain, minutes: number) {
+    await api.patchDomain(d.id, { intervalMin: minutes }).catch((e:any) => toast.push(e?.message || "Failed"));
+    await refreshAll();
+  }
+
+  function TopBar() {
+    return (
+      <div className="sticky top-0 z-30 border-b border-white/10 bg-black/40 backdrop-blur-xl">
+        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-white/10 border border-white/10 grid place-items-center shadow-soft2">
+              <span className="text-lg font-bold">BO</span>
+            </div>
+            <div>
+              <div className="font-semibold leading-tight">Backorder</div>
+              <div className="text-xs text-zinc-400">Always‑free domain monitor</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button className={classNames("btn", tab==="dashboard" && "bg-white/20")} onClick={() => setTab("dashboard")}>Dashboard</button>
+            <button className={classNames("btn", tab==="activity" && "bg-white/20")} onClick={() => setTab("activity")}>Activity</button>
+            <button className={classNames("btn", tab==="about" && "bg-white/20")} onClick={() => setTab("about")}>About</button>
+            {authed && <button className="btn" onClick={() => setAddOpen(true)}>+ Add</button>}
+            {authed && <button className="btn" onClick={doLogout}>Logout</button>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-zinc-950">
+        <div className="card p-6 text-center">
+          <div className="text-xl font-semibold">Loading…</div>
+          <div className="text-sm text-zinc-400 mt-1">Warming up the Worker API</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authed) {
+    return (
+      <div className="min-h-screen bg-zinc-950">
+        <TopBar />
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
+            <div className="card p-6 glow bg-grid">
+              <div className="text-3xl font-semibold">Monitor domains safely.</div>
+              <div className="text-zinc-300 mt-2 leading-relaxed">
+                Hourly checks (24×/day) with adaptive backoff on rate limits.
+                Get instant signals via Telegram/Discord (optional).
+              </div>
+              <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
+                <div className="card p-4">
+                  <div className="text-zinc-400">Checks</div>
+                  <div className="font-semibold">24×/day (default)</div>
+                </div>
+                <div className="card p-4">
+                  <div className="text-zinc-400">Safety</div>
+                  <div className="font-semibold">Auto backoff</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="card p-6">
+              <div className="text-xl font-semibold">Admin Sign‑in</div>
+
+              <div className="mt-5 space-y-3">
+                <input className="input" placeholder="Email" value={email} onChange={(e)=>setEmail(e.target.value)} />
+                <input className="input" placeholder="Password" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} />
+                <button className="btn w-full" onClick={doLogin}>Sign in</button>
+              </div>
+
+              <div className="sep my-6" />
+              <div className="text-xs text-zinc-500 leading-relaxed">
+                Tip: serve this UI over HTTPS (recommended). Cookie is <span className="font-mono">Secure</span> + <span className="font-mono">HttpOnly</span>.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-950">
+      <TopBar />
+
+      <Modal open={addOpen} title="Add Domain" onClose={() => setAddOpen(false)}>
+        <div className="space-y-3">
+          <div>
+            <div className="text-sm text-zinc-300 mb-1">Domain</div>
+            <input className="input" placeholder="example.com" value={newDomain} onChange={(e)=>setNewDomain(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-sm text-zinc-300 mb-1">Label</div>
+              <input className="input" placeholder="client / project" value={newLabel} onChange={(e)=>setNewLabel(e.target.value)} />
+            </div>
+            <div>
+              <div className="text-sm text-zinc-300 mb-1">Interval (min)</div>
+              <input className="input" type="number" min={30} max={1440} value={newInterval} onChange={(e)=>setNewInterval(parseInt(e.target.value || "60", 10))} />
+            </div>
+          </div>
+          <button className="btn w-full" onClick={addDomain}>Add</button>
+          <div className="text-xs text-zinc-500">Default 60 minutes = 24× per day.</div>
+        </div>
+      </Modal>
+
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        {tab === "dashboard" && (
+          <>
+            <div className="grid md:grid-cols-5 gap-4">
+              <div className="card p-4">
+                <div className="text-zinc-400 text-xs">Total</div>
+                <div className="text-2xl font-semibold mt-1">{stats.total}</div>
+              </div>
+              <div className="card p-4">
+                <div className="text-zinc-400 text-xs">Enabled</div>
+                <div className="text-2xl font-semibold mt-1">{stats.enabled}</div>
+              </div>
+              <div className="card p-4">
+                <div className="text-zinc-400 text-xs">Available</div>
+                <div className="text-2xl font-semibold mt-1">{stats.available}</div>
+              </div>
+              <div className="card p-4">
+                <div className="text-zinc-400 text-xs">Rate‑limited</div>
+                <div className="text-2xl font-semibold mt-1">{stats.rateLimited}</div>
+              </div>
+              <div className="card p-4">
+                <div className="text-zinc-400 text-xs">Errors</div>
+                <div className="text-2xl font-semibold mt-1">{stats.errors}</div>
+              </div>
+            </div>
+
+            <div className="mt-6 card overflow-hidden">
+              <div className="p-4 flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-lg font-semibold">Domains</div>
+                  <div className="text-xs text-zinc-400">Auto‑refresh every 30s</div>
+                </div>
+                <div className="text-xs text-zinc-500">Now: {new Date(now*1000).toLocaleString()}</div>
+              </div>
+              <div className="sep" />
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="text-zinc-400">
+                    <tr className="text-left">
+                      <th className="px-4 py-3">Domain</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Next</th>
+                      <th className="px-4 py-3">Interval</th>
+                      <th className="px-4 py-3">Last Check</th>
+                      <th className="px-4 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {domains.map(d => (
+                      <tr key={d.id} className="border-t border-white/10 hover:bg-white/5">
+                        <td className="px-4 py-3">
+                          <div className="font-semibold">{d.domain}</div>
+                          <div className="text-xs text-zinc-500">{d.label || "—"}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={classNames("badge", statusPill(d.last_status))}>
+                            {(d.last_status || "unknown").replace("_"," ")}
+                          </span>
+                          {d.last_rdap_http ? <div className="text-xs text-zinc-500 mt-1">HTTP {d.last_rdap_http}</div> : null}
+                          {d.last_error ? <div className="text-xs text-rose-200/80 mt-1 max-w-xs truncate" title={d.last_error}>{d.last_error}</div> : null}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-medium">{relEta(d.next_check_at, now)}</div>
+                          <div className="text-xs text-zinc-500">{fmtTime(d.next_check_at)}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <select
+                            className="input bg-black/30"
+                            value={d.check_interval_min}
+                            onChange={(e)=>setIntervalMin(d, parseInt(e.target.value,10))}
+                          >
+                            {[30,60,120,240,360,720,1440].map(m => (
+                              <option key={m} value={m}>{m} min</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-zinc-200">{fmtTime(d.last_checked_at)}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-2">
+                            <button className="btn" onClick={() => toggleDomain(d)}>
+                              {d.enabled === 1 ? "Disable" : "Enable"}
+                            </button>
+                            <button className="btn" onClick={() => forceCheck(d)}>Force</button>
+                            <button className="btn" onClick={() => removeDomain(d)}>Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {domains.length === 0 && (
+                      <tr>
+                        <td className="px-4 py-8 text-zinc-400" colSpan={6}>
+                          No domains yet. Click <span className="font-semibold text-zinc-200">+ Add</span> to start monitoring.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="mt-6 grid lg:grid-cols-2 gap-6">
+              <div className="card p-5">
+                <div className="text-lg font-semibold">Latest activity</div>
+                <div className="text-xs text-zinc-400 mb-3">Most recent events</div>
+                <div className="sep mb-4" />
+                <div className="space-y-3 max-h-[420px] overflow-auto pr-1">
+                  {events.slice(0, 20).map(ev => (
+                    <div key={ev.id} className="flex gap-3">
+                      <span className={classNames("badge", eventPill(ev.type))}>{ev.type}</span>
+                      <div>
+                        <div className="text-sm">{ev.message}</div>
+                        <div className="text-xs text-zinc-500">{fmtTime(ev.created_at)}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {events.length === 0 && <div className="text-zinc-400">No events yet.</div>}
+                </div>
+              </div>
+
+              <div className="card p-5 bg-grid">
+                <div className="text-lg font-semibold">Ops notes</div>
+                <div className="text-xs text-zinc-400 mb-3">Rate limits & reliability</div>
+                <div className="sep mb-4" />
+                <ul className="text-sm text-zinc-200 space-y-2 leading-relaxed">
+                  <li>• Default checks are hourly (24×/day) and are usually safe.</li>
+                  <li>• If the RDAP endpoint responds with <span className="font-mono">429</span>, the domain backoffs to 6h → 12h → 24h.</li>
+                  <li>• Errors backoff to 2h → 6h → 12h. All logged.</li>
+                  <li>• You can reduce interval per domain from the dropdown.</li>
+                  <li>• Notifications are optional via Telegram/Discord secrets.</li>
+                </ul>
+              </div>
+            </div>
+          </>
+        )}
+
+        {tab === "activity" && (
+          <div className="card p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-lg font-semibold">Activity timeline</div>
+                <div className="text-xs text-zinc-400">Audit log for checks, status changes, auth events</div>
+              </div>
+              <button className="btn" onClick={() => {
+                const blob = new Blob([JSON.stringify(events, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "events.json";
+                a.click();
+                URL.revokeObjectURL(url);
+              }}>Export JSON</button>
+            </div>
+            <div className="sep my-4" />
+            <div className="space-y-3 max-h-[70vh] overflow-auto pr-1">
+              {events.map(ev => (
+                <div key={ev.id} className="flex items-start gap-3">
+                  <span className={classNames("badge", eventPill(ev.type))}>{ev.type}</span>
+                  <div className="flex-1">
+                    <div className="text-sm">{ev.message}</div>
+                    <div className="text-xs text-zinc-500">{fmtTime(ev.created_at)}</div>
+                  </div>
+                </div>
+              ))}
+              {events.length === 0 && <div className="text-zinc-400">No activity yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {tab === "about" && (
+          <div className="grid lg:grid-cols-2 gap-6">
+            <div className="card p-6">
+              <div className="text-xl font-semibold">What you deployed</div>
+              <div className="text-zinc-300 mt-2 leading-relaxed">
+                A full‑stack backorder monitor that runs on Cloudflare’s free tier for backend and your Apache server for UI.
+                It is designed to be simple, safe, and auditable.
+              </div>
+              <div className="sep my-5" />
+              <div className="text-sm text-zinc-200 space-y-2">
+                <div>• Backend: Worker + D1 + hourly cron</div>
+                <div>• Frontend: Vite static build + Tailwind</div>
+                <div>• Auth: PBKDF2 password hashing + secure session cookie</div>
+                <div>• Notifications: Telegram/Discord (optional, free)</div>
+              </div>
+            </div>
+
+            <div className="card p-6 bg-grid">
+              <div className="text-xl font-semibold">Hardening tips</div>
+              <div className="text-zinc-300 mt-2 leading-relaxed">
+                Keep it always‑free but still professional:
+              </div>
+              <div className="sep my-5" />
+              <ul className="text-sm text-zinc-200 space-y-2 leading-relaxed">
+                <li>• Put the frontend behind HTTPS (Cloudflare proxy or your cert).</li>
+                <li>• Restrict CORS origin in Worker (edit <span className="font-mono">cors()</span>).</li>
+                <li>• Use a strong admin password and rotate periodically.</li>
+                <li>• Consider using a dedicated RDAP base per TLD if needed.</li>
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <footer className="py-10 text-center text-xs text-zinc-500 flex flex-col items-center gap-3">
+		  <div>Backorder • built for always-free operations</div>
+
+		  <a
+			href="https://github.com/BigDesigner/Backorder-Always-Free-Domain-Monitor"
+			target="_blank"
+			rel="noopener noreferrer"
+			aria-label="GitHub Repository"
+			className="opacity-80 hover:opacity-100 transition"
+		  >
+			<svg
+			  xmlns="http://www.w3.org/2000/svg"
+			  viewBox="0 0 24 24"
+			  className="w-6 h-6 fill-white"
+			>
+			  <path d="M12 .5C5.73.5.5 5.73.5 12c0 5.1 3.29 9.42 7.86 10.96.58.1.79-.25.79-.56v-2.02c-3.2.7-3.88-1.54-3.88-1.54-.53-1.35-1.29-1.71-1.29-1.71-1.06-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.77.11 3.06.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.27 5.69.42.36.79 1.07.79 2.16v3.2c0 .31.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"/>
+			</svg>
+		  </a>
+	  </footer>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ToastProvider>
+      <Shell />
+    </ToastProvider>
+  );
+}

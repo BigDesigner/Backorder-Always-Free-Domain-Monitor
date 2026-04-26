@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+.bg-grid {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(255,255,255,.08) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.glow {
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 24px 80px rgba(0,0,0,.55);
+}
+
+.card {
+  @apply rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-soft;
+}
+
+.btn {
+  @apply rounded-xl px-4 py-2 font-medium border border-white/10 bg-white/10 hover:bg-white/15 active:scale-[0.99] transition;
+}
+
+.input {
+  @apply w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 outline-none focus:ring-2 focus:ring-white/20;
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold border border-white/10 bg-white/10;
+}
+
+.sep {
+  @apply h-px bg-white/10;
+}

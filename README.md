@@ -69,6 +69,23 @@ Choose the option that fits your setup:
 
 ---
 
+## 🚀 Automated Deployment (GitHub Actions)
+
+If you want to automate your deployments every time you push code, add these to your **GitHub Repository Settings > Secrets and variables > Actions**:
+
+### 🔐 Repository Secrets
+| Secret Name | Description |
+| :--- | :--- |
+| `CLOUDFLARE_ACCOUNT_ID` | Found in your Cloudflare Dashboard (Overview page). |
+| `CLOUDFLARE_API_TOKEN` | Create a token with `Edit Cloudflare Workers` and `Edit D1` permissions. |
+
+### 📊 Repository Variables
+| Variable Name | Description |
+| :--- | :--- |
+| `VITE_API_BASE` | Your deployed Worker's URL (e.g., `https://api.yourdomain.com`). |
+
+---
+
 ## ✨ Why this system is better?
 
 | Feature | Benefit |

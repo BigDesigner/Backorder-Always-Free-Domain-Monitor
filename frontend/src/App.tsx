@@ -95,18 +95,40 @@ function Shell() {
     toast.push("Signed out.");
   }
 
-  async function addDomain() {
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkInput, setBulkInput] = useState("");
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newDomain) return;
     try {
-      const dom = newDomain.trim();
-      await api.addDomain(dom, newLabel.trim() || undefined, newInterval);
-      toast.push("Domain added.");
-      setAddOpen(false);
+      await api.addDomain(newDomain, newLabel || undefined, newInterval || undefined);
       setNewDomain("");
       setNewLabel("");
-      setNewInterval(60);
+      toast.push(`Added ${newDomain}`);
       await refreshAll();
     } catch (e: any) {
-      toast.push(e?.message || "Failed");
+      toast.push(e.message);
+    }
+  }
+
+  async function handleBulkAdd(e: React.FormEvent) {
+    e.preventDefault();
+    const domains = bulkInput.split(/[\n,]+/).map(d => d.trim()).filter(d => d && d.includes("."));
+    if (domains.length === 0) {
+      toast.push("No valid domains found in input");
+      return;
+    }
+    
+    try {
+      toast.push(`Importing ${domains.length} domains...`);
+      const res = await api.bulkAddDomains(domains, newInterval || undefined);
+      setBulkInput("");
+      setBulkMode(false);
+      toast.push(`Done: ${res.results.added} added, ${res.results.skipped} skipped.`);
+      await refreshAll();
+    } catch (e: any) {
+      toast.push(e.message);
     }
   }
 
@@ -205,8 +227,68 @@ function Shell() {
               </div>
             </div>
 
-            <div className="card p-6">
-              <div className="text-xl font-semibold">Admin Sign‑in</div>
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Add Domain</h2>
+              <div className="flex bg-black/20 p-1 rounded-lg">
+                <button 
+                  onClick={() => setBulkMode(false)}
+                  className={`px-3 py-1 text-xs rounded-md transition ${!bulkMode ? 'bg-white/10 shadow-sm' : 'text-zinc-500'}`}
+                >
+                  Single
+                </button>
+                <button 
+                  onClick={() => setBulkMode(true)}
+                  className={`px-3 py-1 text-xs rounded-md transition ${bulkMode ? 'bg-white/10 shadow-sm' : 'text-zinc-500'}`}
+                >
+                  Bulk
+                </button>
+              </div>
+            </div>
+
+            {bulkMode ? (
+              <form onSubmit={handleBulkAdd} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-400 mb-1">Domains (one per line or comma separated)</label>
+                  <textarea 
+                    className="input min-h-[120px] resize-none" 
+                    placeholder="google.com&#10;apple.com, example.net"
+                    value={bulkInput}
+                    onChange={e => setBulkInput(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-400 mb-1">Check Interval (min)</label>
+                    <input type="number" className="input" value={newInterval} onChange={e => setNewInterval(Number(e.target.value))} />
+                  </div>
+                </div>
+                <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3">
+                  Import List
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleAdd} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-400 mb-1">Domain Name</label>
+                    <input type="text" className="input" placeholder="example.com" value={newDomain} onChange={e => setNewDomain(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-400 mb-1">Custom Label (Optional)</label>
+                    <input type="text" className="input" placeholder="Client A" value={newLabel} onChange={e => setNewLabel(e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-400 mb-1">Check Interval (minutes)</label>
+                  <input type="number" className="input" value={newInterval} onChange={e => setNewInterval(Number(e.target.value))} />
+                </div>
+                <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3">
+                  Start Monitoring
+                </button>
+              </form>
+            )}
+          </div>
 
               <div className="mt-5 space-y-3">
                 <input className="input" placeholder="Email" value={email} onChange={(e)=>setEmail(e.target.value)} />

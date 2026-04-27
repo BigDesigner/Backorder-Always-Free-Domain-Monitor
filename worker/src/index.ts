@@ -178,7 +178,54 @@ app.post("/api/domains/:id/delete", async (c) => {
   return c.json({ ok: false, error: "Domain not found or already deleted" }, 404);
 });
 
-app.get("/api/events", async (c) => {
+app.post("/api/bulk-domains", async (c) => {
+  await ensureAdmin(c.env);
+  const user = await requireAuth(c.env, c.req.raw);
+  if (!user) return c.json({ ok: false }, 401);
+
+  const body = await c.req.json().catch(() => null) as { domains?: string[]; intervalMin?: number } | null;
+  const rawDomains = body?.domains || [];
+  const intervalMin = body?.intervalMin || 60;
+
+  if (!Array.isArray(rawDomains) || rawDomains.length === 0) {
+    return c.json({ ok: false, error: "No domains provided" }, 400);
+  }
+
+  const results = { added: 0, skipped: 0, errors: [] as string[] };
+  const now = nowSec();
+
+  for (const raw of rawDomains) {
+    const domain = raw.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+    if (!domain || !domain.includes(".")) {
+      results.errors.push(`Invalid: ${raw}`);
+      continue;
+    }
+
+    const existing = await getDomainByName(c.env, domain);
+    if (existing) {
+      results.skipped++;
+      continue;
+    }
+
+    try {
+      const next = now + (results.added * 5); // Stagger initial checks by 5 seconds
+      await c.env.DB.prepare(
+        "INSERT INTO domains(domain, label, enabled, check_interval_min, next_check_at, last_checked_at, last_status, created_at) VALUES(?,?,?,?,?,?,?,?)"
+      ).bind(domain, null, 1, intervalMin, next, null, "unknown", now).run();
+      
+      results.added++;
+    } catch (e: any) {
+      results.errors.push(`${domain}: ${e.message}`);
+    }
+  }
+
+  await addEvent(c.env, null, "info", `Bulk add by ${user.email}: ${results.added} added, ${results.skipped} skipped`);
+  
+  // Trigger scheduler for the new batch
+  c.executionCtx.waitUntil(runScheduler(c.env));
+
+  return c.json({ ok: true, results });
+});
   await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);

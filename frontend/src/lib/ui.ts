@@ -5,26 +5,26 @@ export function classNames(...v: Array<string | false | null | undefined>) {
 export function statusPill(status: string | null) {
   const s = (status || "unknown").toLowerCase();
   const map: Record<string, string> = {
-    available: "border-emerald-300/20 bg-emerald-400/15 text-emerald-200",
-    registered: "border-sky-300/20 bg-sky-400/15 text-sky-200",
-    unknown: "border-white/10 bg-white/10 text-zinc-200",
-    rate_limited: "border-amber-300/20 bg-amber-400/15 text-amber-200",
-    error: "border-rose-300/20 bg-rose-400/15 text-rose-200"
+    available: "text-emerald-400",
+    registered: "text-sky-400",
+    unknown: "text-zinc-500",
+    rate_limited: "text-amber-400",
+    error: "text-rose-400"
   };
-  const base = "inline-flex items-center justify-center w-20 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shrink-0";
+  const base = "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide shrink-0";
   return classNames(base, map[s] || map.unknown);
 }
 
 export function eventPill(type: string) {
   const t = type.toLowerCase();
   const map: Record<string, string> = {
-    available: "border-emerald-300/20 bg-emerald-400/15 text-emerald-200",
-    registered: "border-sky-300/20 bg-sky-400/15 text-sky-200",
-    info: "border-white/10 bg-white/10 text-zinc-200",
-    rate_limited: "border-amber-300/20 bg-amber-400/15 text-amber-200",
-    error: "border-rose-300/20 bg-rose-400/15 text-rose-200",
-    auth: "border-fuchsia-300/20 bg-fuchsia-400/15 text-fuchsia-200"
+    available: "text-emerald-400",
+    registered: "text-sky-400",
+    info: "text-zinc-400",
+    rate_limited: "text-amber-400",
+    error: "text-rose-400",
+    auth: "text-fuchsia-400"
   };
-  const base = "inline-flex items-center justify-center w-16 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shrink-0";
+  const base = "inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider shrink-0";
   return classNames(base, map[t] || map.info);
 }

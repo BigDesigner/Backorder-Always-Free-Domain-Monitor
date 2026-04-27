@@ -388,10 +388,11 @@ function Shell() {
                           <div className="text-xs text-zinc-500">{d.label || "—"}</div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={classNames("badge", statusPill(d.last_status))}>
+                          <div className={classNames(statusPill(d.last_status))}>
+                            <span className="text-[10px]">●</span>
                             {(d.last_status || "unknown").replace("_"," ")}
-                          </span>
-                          {d.last_rdap_http ? <div className="text-xs text-zinc-500 mt-1">HTTP {d.last_rdap_http}</div> : null}
+                          </div>
+                          {d.last_rdap_http ? <div className="text-xs text-zinc-500 mt-1 pl-4">HTTP {d.last_rdap_http}</div> : null}
                           {d.last_error ? <div className="text-xs text-rose-200/80 mt-1 max-w-xs truncate" title={d.last_error}>{d.last_error}</div> : null}
                         </td>
                         <td className="px-4 py-3">
@@ -504,7 +505,10 @@ function Shell() {
             <div className="space-y-3 max-h-[70vh] overflow-auto pr-1">
               {events.map(ev => (
                 <div key={ev.id} className="flex items-start gap-3">
-                  <span className={classNames("badge", eventPill(ev.type))}>{ev.type}</span>
+                  <div className={classNames(eventPill(ev.type))}>
+                    <span className="text-[8px]">●</span>
+                    {ev.type}
+                  </div>
                   <div className="flex-1">
                     <div className="text-sm">{ev.message}</div>
                     <div className="text-xs text-zinc-500">{fmtTime(ev.created_at)}</div>

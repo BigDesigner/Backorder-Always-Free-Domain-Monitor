@@ -435,20 +435,31 @@ function Shell() {
               }}>Export JSON</button>
             </div>
             <div className="sep my-4" />
-            <div className="space-y-3 max-h-[70vh] overflow-auto pr-1">
-              {events.map(ev => (
-                <div key={ev.id} className="flex items-start gap-3">
-                  <div className={classNames(eventPill(ev.type))}>
-                    <span className="text-[8px]">●</span>
-                    {ev.type}
+            <div className="max-h-[70vh] overflow-auto pr-1">
+              {/* Header */}
+              <div className="grid grid-cols-[110px_1fr_150px] gap-4 px-2 py-2 text-[10px] uppercase tracking-wider font-bold text-zinc-500 border-b border-zinc-800/50 mb-2">
+                <div>Type</div>
+                <div>Message</div>
+                <div className="text-right">Timestamp</div>
+              </div>
+              
+              <div className="space-y-1">
+                {events.map(ev => (
+                  <div key={ev.id} className="grid grid-cols-[110px_1fr_150px] gap-4 items-center px-2 py-2 hover:bg-zinc-800/30 rounded-lg transition-colors group">
+                    <div className={classNames(eventPill(ev.type), "w-full justify-start font-mono text-[10px] uppercase")}>
+                      <span className="text-[8px]">●</span>
+                      {ev.type}
+                    </div>
+                    <div className="text-sm text-zinc-300 truncate group-hover:text-zinc-100" title={ev.message}>
+                      {ev.message}
+                    </div>
+                    <div className="text-xs text-zinc-500 font-mono text-right">
+                      {fmtTime(ev.created_at)}
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="text-sm">{ev.message}</div>
-                    <div className="text-xs text-zinc-500">{fmtTime(ev.created_at)}</div>
-                  </div>
-                </div>
-              ))}
-              {events.length === 0 && <div className="text-zinc-400">No activity yet.</div>}
+                ))}
+              </div>
+              {events.length === 0 && <div className="text-zinc-400 p-4">No activity yet.</div>}
             </div>
           </div>
         )}

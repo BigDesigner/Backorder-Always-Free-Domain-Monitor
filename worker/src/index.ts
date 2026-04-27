@@ -263,11 +263,12 @@ app.post("/api/maintenance/reset", async (c) => {
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);
 
-  // Dangerous: Delete everything
+  // Dangerous: Delete everything and reset auto-increment counters
   await c.env.DB.batch([
     c.env.DB.prepare("DELETE FROM events"),
     c.env.DB.prepare("DELETE FROM domains"),
-    c.env.DB.prepare("DELETE FROM sessions")
+    c.env.DB.prepare("DELETE FROM sessions"),
+    c.env.DB.prepare("DELETE FROM sqlite_sequence WHERE name IN ('events', 'domains', 'sessions')")
   ]);
   
   return c.json({ ok: true });

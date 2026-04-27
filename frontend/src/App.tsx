@@ -30,7 +30,7 @@ function Shell() {
   const [newLabel, setNewLabel] = useState("");
   const [newInterval, setNewInterval] = useState(60);
 
-  const [tab, setTab] = useState<"dashboard" | "activity" | "about">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "activity" | "settings">("dashboard");
 
   async function refreshAll() {
     try {

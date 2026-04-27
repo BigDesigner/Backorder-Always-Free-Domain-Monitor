@@ -36,7 +36,8 @@ const TLD_SPECIFIC_PROVIDERS: Record<string, string> = {
   "kg": "https://rdap.cctld.kg/",
   "si": "https://rdap.register.si/",
   "ve": "https://rdap.nic.ve/rdap/",
-  "tz": "https://whois.tznic.or.tz/rdap/"
+  "tz": "https://whois.tznic.or.tz/rdap/",
+  "tr": "https://rdap.iana.org/domain/"
 };
 
 export async function checkDomain(env: Env, domainIn: string): Promise<RdapResult> {

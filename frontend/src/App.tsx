@@ -122,10 +122,21 @@ function Shell() {
   }
 
   async function removeDomain(d: Domain) {
-    if (!confirm(`Remove ${d.domain}?`)) return;
-    toast.push(`Removing ${d.domain}...`);
-    await api.deleteDomain(d.id).catch((e:any) => toast.push(e?.message || "Failed"));
-    await refreshAll();
+    if (!confirm(`Are you sure you want to remove ${d.domain}?`)) return;
+    
+    try {
+      toast.push(`Removing ${d.domain}...`);
+      await api.deleteDomain(d.id);
+      
+      // Wait a tiny bit for D1 to finalize the write across replicas
+      await new Promise(r => setTimeout(r, 500));
+      
+      toast.push("Successfully removed.");
+      await refreshAll();
+    } catch (e: any) {
+      console.error("Delete failed:", e);
+      toast.push(`Error: ${e.message || "Deletion failed"}`);
+    }
   }
 
   async function setIntervalMin(d: Domain, minutes: number) {

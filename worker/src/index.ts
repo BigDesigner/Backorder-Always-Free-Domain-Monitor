@@ -142,14 +142,19 @@ app.patch("/api/domains/:id", async (c) => {
 app.post("/api/domains/:id/delete", async (c) => {
   await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
-  if (!user) return c.json({ ok: false }, 401);
+  if (!user) return c.json({ ok: false, error: "Unauthorized" }, 401);
 
   const id = Number(c.req.param("id"));
-  const d = await getDomainById(c.env, id);
-  if (!d) return c.json({ ok: false, error: "Not found" }, 404);
+  if (isNaN(id)) return c.json({ ok: false, error: "Invalid ID" }, 400);
 
-  await c.env.DB.prepare("DELETE FROM domains WHERE id = ?").bind(id).run();
-  await addEvent(c.env, null, "info", `Domain removed by ${user.email}: ${d.domain}`);
+  // Execute delete directly with explicit casting
+  const res = await c.env.DB.prepare("DELETE FROM domains WHERE id = CAST(? AS INTEGER)").bind(id).run();
+  
+  if (!res.success) {
+    return c.json({ ok: false, error: "Database error during deletion" }, 500);
+  }
+
+  await addEvent(c.env, null, "info", `Domain (ID: ${id}) removed by ${user.email}`);
   return c.json({ ok: true });
 });
 

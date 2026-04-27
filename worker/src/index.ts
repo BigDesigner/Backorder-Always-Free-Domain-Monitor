@@ -8,7 +8,16 @@ import { runScheduler } from "./scheduler";
 const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", cors({
-  origin: (origin) => origin, // Return requested origin directly for diagnosis
+  origin: (origin) => {
+    if (!origin) return null;
+    const url = new URL(origin);
+    const host = url.hostname;
+    // Strictly allow only gnn.tr and its subdomains + localhost for development
+    if (host === "gnn.tr" || host.endsWith(".gnn.tr") || host.endsWith(".pages.dev") || host === "localhost") {
+      return origin;
+    }
+    return null;
+  },
   credentials: true,
   allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],

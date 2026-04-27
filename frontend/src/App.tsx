@@ -227,78 +227,24 @@ function Shell() {
               </div>
             </div>
 
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Add Domain</h2>
-              <div className="flex bg-black/20 p-1 rounded-lg">
-                <button 
-                  onClick={() => setBulkMode(false)}
-                  className={`px-3 py-1 text-xs rounded-md transition ${!bulkMode ? 'bg-white/10 shadow-sm' : 'text-zinc-500'}`}
-                >
-                  Single
-                </button>
-                <button 
-                  onClick={() => setBulkMode(true)}
-                  className={`px-3 py-1 text-xs rounded-md transition ${bulkMode ? 'bg-white/10 shadow-sm' : 'text-zinc-500'}`}
-                >
-                  Bulk
-                </button>
-              </div>
-            </div>
-
-            {bulkMode ? (
-              <form onSubmit={handleBulkAdd} className="space-y-4">
+            <div className="card p-6">
+              <h2 className="text-xl font-bold mb-4">Admin Sign-in</h2>
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">Domains (one per line or comma separated)</label>
-                  <textarea 
-                    className="input min-h-[120px] resize-none" 
-                    placeholder="google.com&#10;apple.com, example.net"
-                    value={bulkInput}
-                    onChange={e => setBulkInput(e.target.value)}
-                  />
-                </div>
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-400 mb-1">Check Interval (min)</label>
-                    <input type="number" className="input" value={newInterval} onChange={e => setNewInterval(Number(e.target.value))} />
-                  </div>
-                </div>
-                <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3">
-                  Import List
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleAdd} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-400 mb-1">Domain Name</label>
-                    <input type="text" className="input" placeholder="example.com" value={newDomain} onChange={e => setNewDomain(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-400 mb-1">Custom Label (Optional)</label>
-                    <input type="text" className="input" placeholder="Client A" value={newLabel} onChange={e => setNewLabel(e.target.value)} />
-                  </div>
+                  <label className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
+                  <input className="input" placeholder="admin@gnn.tr" value={email} onChange={(e)=>setEmail(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">Check Interval (minutes)</label>
-                  <input type="number" className="input" value={newInterval} onChange={e => setNewInterval(Number(e.target.value))} />
+                  <label className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
+                  <input className="input" type="password" placeholder="••••••••" value={password} onChange={(e)=>setPassword(e.target.value)} />
                 </div>
-                <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3">
-                  Start Monitoring
+                <button className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3" onClick={doLogin}>
+                  Sign In
                 </button>
-              </form>
-            )}
-          </div>
-
-              <div className="mt-5 space-y-3">
-                <input className="input" placeholder="Email" value={email} onChange={(e)=>setEmail(e.target.value)} />
-                <input className="input" placeholder="Password" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} />
-                <button className="btn w-full" onClick={doLogin}>Sign in</button>
               </div>
-
               <div className="sep my-6" />
-              <div className="text-xs text-zinc-500 leading-relaxed">
-                Tip: serve this UI over HTTPS (recommended). Cookie is <span className="font-mono">Secure</span> + <span className="font-mono">HttpOnly</span>.
+              <div className="text-xs text-zinc-500 leading-relaxed text-center">
+                Cookie is <span className="font-mono">Secure</span> + <span className="font-mono">HttpOnly</span>.
               </div>
             </div>
           </div>
@@ -564,6 +510,62 @@ function Shell() {
           </div>
         )}
       </div>
+
+      <Modal open={addOpen} title="Add Domain" onClose={() => setAddOpen(false)}>
+        <div className="flex bg-black/20 p-1 rounded-lg mb-4">
+          <button 
+            onClick={() => setBulkMode(false)}
+            className={`flex-1 py-1.5 text-xs rounded-md transition ${!bulkMode ? 'bg-white/10 shadow-sm' : 'text-zinc-500'}`}
+          >
+            Single
+          </button>
+          <button 
+            onClick={() => setBulkMode(true)}
+            className={`flex-1 py-1.5 text-xs rounded-md transition ${bulkMode ? 'bg-white/10 shadow-sm' : 'text-zinc-500'}`}
+          >
+            Bulk
+          </button>
+        </div>
+
+        {bulkMode ? (
+          <form onSubmit={handleBulkAdd} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-1">Domains (one per line or comma separated)</label>
+              <textarea 
+                className="input min-h-[150px] resize-none" 
+                placeholder="google.com&#10;apple.com, example.net"
+                value={bulkInput}
+                onChange={e => setBulkInput(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-1">Interval (min)</label>
+              <input type="number" className="input" value={newInterval} onChange={e => setNewInterval(Number(e.target.value))} />
+            </div>
+            <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3">
+              Import All
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleAdd} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-1">Domain Name</label>
+              <input type="text" className="input" placeholder="example.com" value={newDomain} onChange={e => setNewDomain(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-1">Label (Optional)</label>
+              <input type="text" className="input" placeholder="Client X" value={newLabel} onChange={e => setNewLabel(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-1">Interval (min)</label>
+              <input type="number" className="input" value={newInterval} onChange={e => setNewInterval(Number(e.target.value))} />
+            </div>
+            <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3">
+              Start Monitoring
+            </button>
+          </form>
+        )}
+      </Modal>
 
       <footer className="py-10 text-center text-xs text-zinc-500 flex flex-col items-center gap-3">
 		  <div>Backorder • built for always-free operations</div>

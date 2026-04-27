@@ -226,6 +226,8 @@ app.post("/api/bulk-domains", async (c) => {
 
   return c.json({ ok: true, results });
 });
+
+app.get("/api/events", async (c) => {
   await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);

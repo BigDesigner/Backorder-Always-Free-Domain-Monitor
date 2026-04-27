@@ -49,6 +49,8 @@ function Shell() {
   const [now, setNow] = useState<number>(Math.floor(Date.now()/1000));
 
   const [addOpen, setAddOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetInput, setResetInput] = useState("");
   const [newDomain, setNewDomain] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [newInterval, setNewInterval] = useState(60);
@@ -563,15 +565,9 @@ function Shell() {
                   🧹 Clean Events (&gt; 30 days)
                 </button>
 
-                <button className="btn w-full py-2.5 text-sm bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 text-rose-300" onClick={async () => {
-                  if (!confirm("⚠️ FACTORY RESET: This will delete ALL domains, ALL events, and reset ID counters. Are you absolutely sure?")) return;
-                  try {
-                    await api.factoryReset();
-                    toast.push("System reset complete.");
-                    window.location.reload();
-                  } catch (e: any) {
-                    toast.push(e.message);
-                  }
+                <button className="btn w-full py-2.5 text-sm bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 text-rose-300" onClick={() => {
+                  setResetInput("");
+                  setResetOpen(true);
                 }}>
                   💀 Factory Reset System
                 </button>
@@ -581,7 +577,49 @@ function Shell() {
         )}
       </div>
 
-      <Modal open={addOpen} title="Add Domain" onClose={() => setAddOpen(false)}>
+      </Modal>
+
+      <Modal open={resetOpen} title="Dangerous Action: Factory Reset" onClose={() => setResetOpen(false)}>
+        <div className="space-y-4">
+          <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-200 text-sm">
+            <strong>Warning:</strong> Deleting everything is permanent and cannot be undone. All domains and history will be lost.
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-zinc-400 mb-2">
+              Type <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-200 select-all">yes-i-know-all-database-rows-deleted</code> to confirm:
+            </label>
+            <input 
+              type="text" 
+              className="input border-rose-500/30 focus:border-rose-500" 
+              placeholder="Type confirmation here..."
+              value={resetInput}
+              onChange={e => setResetInput(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button className="btn flex-1" onClick={() => setResetOpen(false)}>Cancel</button>
+            <button 
+              className="btn flex-1 bg-rose-600 hover:bg-rose-500 text-white border-none disabled:opacity-30 disabled:cursor-not-allowed font-bold"
+              disabled={resetInput !== "yes-i-know-all-database-rows-deleted"}
+              onClick={async () => {
+                try {
+                  await api.factoryReset();
+                  toast.push("System has been fully reset.");
+                  setResetOpen(false);
+                  window.location.reload();
+                } catch (e: any) {
+                  toast.push(e.message);
+                }
+              }}
+            >
+              Destroy Everything
+            </button>
+          </div>
+        </div>
+      </Modal>
         <div className="flex bg-black/20 p-1 rounded-lg mb-4">
           <button 
             onClick={() => setBulkMode(false)}

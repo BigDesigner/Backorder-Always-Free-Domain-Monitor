@@ -9,5 +9,5 @@ crons = ["0 * * * *"] # hourly (24x/day)
 [[d1_databases]]
 binding = "DB"
 database_name = "backorder_d1"
-database_id = "03f01843-7806-4d9d-a102-4b4f3494a32e"
+database_id = "c91b2c14-9a64-4e15-b36e-4203ca2b8baa"
 migrations_dir = "migrations"

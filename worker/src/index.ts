@@ -144,28 +144,28 @@ app.post("/api/domains/:id/delete", async (c) => {
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false, error: "Unauthorized" }, 401);
 
-  const id = Number(c.req.param("id"));
-  if (isNaN(id)) return c.json({ ok: false, error: "Invalid ID" }, 400);
-
-  // 1. Manually delete all events associated with this domain first
-  // This bypasses any Foreign Key / SET NULL issues
-  await c.env.DB.prepare("DELETE FROM events WHERE domain_id = CAST(? AS INTEGER)").bind(id).run();
-
-  // 2. Now delete the domain itself
-  const res = await c.env.DB.prepare("DELETE FROM domains WHERE id = CAST(? AS INTEGER)").bind(id).run();
+  const idOrName = c.req.param("id");
   
-  if (!res.success) {
-    return c.json({ ok: false, error: "Database execution failed during domain deletion" }, 500);
+  // Try to delete by ID first (as integer)
+  const id = Number(idOrName);
+  if (!isNaN(id)) {
+    await c.env.DB.prepare("DELETE FROM events WHERE domain_id = CAST(? AS INTEGER)").bind(id).run();
+    const res = await c.env.DB.prepare("DELETE FROM domains WHERE id = CAST(? AS INTEGER)").bind(id).run();
+    if (res.meta.changes > 0) {
+      await addEvent(c.env, null, "info", `Domain (ID: ${id}) purged by ${user.email}`);
+      return c.json({ ok: true });
+    }
   }
 
-  if (res.meta.changes === 0) {
-    return c.json({ ok: false, error: `No domain found with ID: ${id}` }, 404);
+  // Fallback: Try to delete by domain name (as string)
+  // This is a safety net if IDs are acting weird after migrations
+  const res2 = await c.env.DB.prepare("DELETE FROM domains WHERE domain = ?").bind(idOrName).run();
+  if (res2.meta.changes > 0) {
+     await addEvent(c.env, null, "info", `Domain (${idOrName}) purged by name by ${user.email}`);
+     return c.json({ ok: true });
   }
 
-  // 3. Log the system-wide removal event (not tied to any domain ID)
-  await addEvent(c.env, null, "info", `Domain (ID: ${id}) and its history fully purged by ${user.email}`);
-  
-  return c.json({ ok: true });
+  return c.json({ ok: false, error: "Domain not found or already deleted" }, 404);
 });
 
 app.get("/api/events", async (c) => {

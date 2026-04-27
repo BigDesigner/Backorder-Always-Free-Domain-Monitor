@@ -28,6 +28,7 @@ async function req<T>(path: string, opts: RequestInit = {}): Promise<T> {
     ...opts,
     headers: {
       "content-type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
       ...(opts.headers || {})
     },
     credentials: "include"

@@ -43,7 +43,8 @@ export async function runScheduler(env: Env): Promise<{ checked: number; due: nu
 
         // [FEAT-01] Dynamic Scaling based on Lifecycle
         if (status === "registered" && res.payload) {
-          const rdapStatus = (res.payload as any).status || [];
+          // SEC-12: Defensive parsing — don't trust RDAP response shape
+          const rdapStatus = Array.isArray((res.payload as any)?.status) ? (res.payload as any).status : [];
           const isPendingDelete = rdapStatus.some((s: string) => s.toLowerCase().includes("pending delete"));
           const isRedemption = rdapStatus.some((s: string) => s.toLowerCase().includes("redemption"));
 
@@ -59,7 +60,8 @@ export async function runScheduler(env: Env): Promise<{ checked: number; due: nu
 
         let expiresAt: number | null = null;
         if (status === "registered" && res.payload) {
-          const events = (res.payload as any).events || [];
+          // SEC-12: Defensive parsing
+          const events = Array.isArray((res.payload as any)?.events) ? (res.payload as any).events : [];
           const expiryEvent = events.find((e: any) => e.eventAction === "expiration");
           if (expiryEvent && expiryEvent.eventDate) {
             try {

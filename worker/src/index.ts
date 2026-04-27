@@ -25,6 +25,17 @@ app.use("*", cors({
   maxAge: 86400,
 }));
 
+// SEC-03: CSRF protection — require X-Requested-With on all mutating requests
+app.use("*", async (c, next) => {
+  const method = c.req.method.toUpperCase();
+  if (["POST", "PATCH", "DELETE"].includes(method)) {
+    if (c.req.header("X-Requested-With") !== "XMLHttpRequest") {
+      return c.json({ ok: false, error: "Forbidden" }, 403);
+    }
+  }
+  await next();
+});
+
 app.get("/api/health", async (c) => {
   await ensureAdmin(c.env);
   return c.json({ ok: true, ts: new Date().toISOString() });
@@ -42,6 +53,14 @@ app.post("/api/login", async (c) => {
   const body = await c.req.json().catch(() => null) as { email?: string; password?: string } | null;
   if (!body?.email || !body?.password) return c.json({ ok: false, error: "Missing email/password" }, 400);
 
+  // SEC-08: Rate limit — max 5 failed attempts per minute
+  const recentFails = await c.env.DB.prepare(
+    "SELECT COUNT(*) as cnt FROM events WHERE type = 'auth' AND message LIKE 'Failed login%' AND created_at > ?"
+  ).bind(nowSec() - 60).first<{cnt: number}>();
+  if (recentFails && recentFails.cnt >= 5) {
+    return c.json({ ok: false, error: "Too many attempts. Try again later." }, 429);
+  }
+
   const res = await doLogin(c.env, body.email, body.password);
   if (!res) {
     await addEvent(c.env, null, "auth", `Failed login attempt for ${body.email}`);
@@ -49,20 +68,21 @@ app.post("/api/login", async (c) => {
   }
 
   await addEvent(c.env, null, "auth", `Login success for ${body.email}`);
-  // Cookie for browser usage
   c.header(
-  "Set-Cookie",
-  `bo_session=${encodeURIComponent(res.token)}; Path=/; Max-Age=${60*60*24*7}; HttpOnly; SameSite=None; Secure`
-);
+    "Set-Cookie",
+    `bo_session=${encodeURIComponent(res.token)}; Path=/; Max-Age=${60*60*24*7}; HttpOnly; SameSite=None; Secure`
+  );
 
-  return c.json({ ok: true, token: res.token });
+  // SEC-01: Do NOT return token in body — HttpOnly cookie is sufficient
+  return c.json({ ok: true });
 });
 
 app.post("/api/logout", async (c) => {
   await ensureAdmin(c.env);
   const token = getSessionTokenFromRequest(c.req.raw);
   if (token) await doLogout(c.env, token);
-  c.header("Set-Cookie", "bo_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax");
+  // SEC-02: Match login cookie flags exactly
+  c.header("Set-Cookie", "bo_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None");
   return c.json({ ok: true });
 });
 
@@ -134,6 +154,10 @@ app.patch("/api/domains/:id", async (c) => {
   if (body?.forceCheck) {
     updates.push("next_check_at = ?");
     binds.push(nowSec());
+  }
+  // SEC-05: Guard against empty updates
+  if (updates.length === 0) {
+    return c.json({ ok: true, domain: d });
   }
   binds.push(id);
   await c.env.DB.prepare(`UPDATE domains SET ${updates.join(", ")} WHERE id = ?`).bind(...binds).run();
@@ -214,7 +238,8 @@ app.post("/api/bulk-domains", async (c) => {
       
       results.added++;
     } catch (e: any) {
-      results.errors.push(`${domain}: ${e.message}`);
+      // SEC-11: Sanitize — don't leak D1 internals
+      results.errors.push(`${domain}: insert failed`);
     }
   }
 
@@ -253,7 +278,11 @@ app.post("/api/maintenance/clean-events", async (c) => {
 
   const thirtyDaysAgo = nowSec() - (30 * 24 * 3600);
   const res = await c.env.DB.prepare("DELETE FROM events WHERE created_at < ?").bind(thirtyDaysAgo).run();
-  await addEvent(c.env, null, "info", `Database cleanup by ${user.email}: removed old events.`);
+
+  // SEC-09: Also purge expired sessions
+  await c.env.DB.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(nowSec()).run();
+
+  await addEvent(c.env, null, "info", `Database cleanup by ${user.email}: removed old events + expired sessions.`);
   
   return c.json({ ok: true, removed: res.meta.changes });
 });

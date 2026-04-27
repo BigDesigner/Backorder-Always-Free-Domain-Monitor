@@ -48,11 +48,24 @@ npx wrangler secret put DISCORD_WEBHOOK_URL
 > To get a Telegram Chat ID, message `@userinfobot` on Telegram after creating your bot via `@BotFather`.
 
 ### Step 4: Deploy the Frontend (Dashboard)
+Choose the option that fits your setup:
+
+#### Option A: Cloudflare Pages (Recommended 🚀)
+1. Go to **Workers & Pages** > **Pages** > **Connect to Git**.
+2. Select this repository.
+3. **Build Settings:**
+   - Framework preset: `Vite`
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+4. **Environment Variables:** Add `VITE_API_BASE` with your Worker's URL.
+5. Click **Save and Deploy**. Your dashboard is now live and auto-syncs with every git push!
+
+#### Option B: Apache / cPanel / Shared Hosting
 1. Go to the `/frontend` folder: `cd ../frontend`
-2. Install dependencies: `npm install`
-3. **Set your API URL:** Rename `.env.production` and update the `VITE_API_BASE` to your Worker's URL (e.g., `https://api.yourdomain.com`).
-4. Build the project: `npm run build`
-5. **Upload:** Take the contents of the `dist/` folder and upload them to your Apache server or cPanel `public_html`.
+2. Update the `VITE_API_BASE` in `.env.production` with your Worker's URL.
+3. Build the project: `npm run build`
+4. **Upload:** Take the contents of the `dist/` folder and upload them to your server's `public_html`.
+5. *Note: Ensure your `.htaccess` file is uploaded to handle SPA routing.*
 
 ---
 

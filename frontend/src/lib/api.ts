@@ -54,9 +54,15 @@ export const api = {
 };
 
 export function fmtTime(tsSec: number | null | undefined): string {
-  if (!tsSec) return "—";
+  if (!tsSec || isNaN(tsSec)) return "—";
   const d = new Date(tsSec * 1000);
-  return d.toLocaleString();
+  return d.toLocaleString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 export function relEta(tsSec: number, nowSec: number): string {

@@ -147,18 +147,24 @@ app.post("/api/domains/:id/delete", async (c) => {
   const id = Number(c.req.param("id"));
   if (isNaN(id)) return c.json({ ok: false, error: "Invalid ID" }, 400);
 
-  // Execute delete directly with explicit casting
+  // 1. Manually delete all events associated with this domain first
+  // This bypasses any Foreign Key / SET NULL issues
+  await c.env.DB.prepare("DELETE FROM events WHERE domain_id = CAST(? AS INTEGER)").bind(id).run();
+
+  // 2. Now delete the domain itself
   const res = await c.env.DB.prepare("DELETE FROM domains WHERE id = CAST(? AS INTEGER)").bind(id).run();
   
   if (!res.success) {
-    return c.json({ ok: false, error: "Database execution failed" }, 500);
+    return c.json({ ok: false, error: "Database execution failed during domain deletion" }, 500);
   }
 
   if (res.meta.changes === 0) {
     return c.json({ ok: false, error: `No domain found with ID: ${id}` }, 404);
   }
 
-  await addEvent(c.env, null, "info", `Domain (ID: ${id}) removed by ${user.email}`);
+  // 3. Log the system-wide removal event (not tied to any domain ID)
+  await addEvent(c.env, null, "info", `Domain (ID: ${id}) and its history fully purged by ${user.email}`);
+  
   return c.json({ ok: true });
 });
 

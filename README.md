@@ -86,6 +86,30 @@ If you want to automate your deployments every time you push code, add these to 
 
 ---
 
+## 🔍 Customization: Where to update your URLs?
+
+When you clone this repo, it contains default domains like `api.gnn.tr`. You **must** replace these with your own in the following files:
+
+| Target | File Path | What to change? |
+| :--- | :--- | :--- |
+| **Worker Name** | `worker/wrangler.toml` | Change `name = "backorder-domain-monitor"` to your preferred name. |
+| **Database ID** | `worker/wrangler.toml` | Replace `database_id` with your own D1 ID from Step 1. |
+| **Frontend API Link** | `frontend/.env.production` | Change `VITE_API_BASE` to your deployed Worker URL. |
+| **CORS Security** | `worker/src/index.ts` | **Line 16:** Update the allowed hostnames (e.g., `yourdomain.com`) to prevent unauthorized access. |
+| **RDAP Headers** | `worker/src/rdap.ts` | **Line 68:** Update the `user-agent` URL for professional identification. |
+
+---
+
+## 🏗️ Architecture Overview
+
+To understand why we use this setup:
+
+1.  **The Worker (API):** This is the brain. It runs the logic, talks to the D1 database, and fetches RDAP data.
+2.  **The Pages (Frontend):** This is the face. It's a static React app that calls the Worker.
+3.  **Custom Domain (Proxy):** By using a custom domain (like `api.yourdomain.com`) for your Worker, you bypass browser blocks that normally stop `*.workers.dev` links from working.
+
+---
+
 ## ✨ Why this system is better?
 
 | Feature | Benefit |

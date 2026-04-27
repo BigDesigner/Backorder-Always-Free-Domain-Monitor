@@ -181,11 +181,15 @@ function Shell() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button className={classNames("btn", tab==="dashboard" && "bg-white/20")} onClick={() => setTab("dashboard")}>Dashboard</button>
-            <button className={classNames("btn", tab==="activity" && "bg-white/20")} onClick={() => setTab("activity")}>Activity</button>
-            <button className={classNames("btn", tab==="settings" && "bg-white/20")} onClick={() => setTab("settings")}>Settings</button>
-            {authed && <button className="btn" onClick={() => setAddOpen(true)}>+ Add</button>}
-            {authed && <button className="btn" onClick={doLogout}>Logout</button>}
+            {authed && (
+              <>
+                <button className={classNames("btn", tab==="dashboard" && "bg-white/20")} onClick={() => setTab("dashboard")}>Dashboard</button>
+                <button className={classNames("btn", tab==="activity" && "bg-white/20")} onClick={() => setTab("activity")}>Activity</button>
+                <button className={classNames("btn", tab==="settings" && "bg-white/20")} onClick={() => setTab("settings")}>Settings</button>
+                <button className="btn" onClick={() => setAddOpen(true)}>+ Add</button>
+                <button className="btn" onClick={doLogout}>Logout</button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -205,50 +209,29 @@ function Shell() {
 
   if (!authed) {
     return (
-      <div className="min-h-screen bg-zinc-950">
+      <div className="min-h-screen bg-zinc-950 flex flex-col">
         <TopBar />
-        <div className="mx-auto max-w-6xl px-4 py-10">
-          <div className="grid lg:grid-cols-2 gap-6 items-start">
-            <div className="card p-6 glow bg-grid">
-              <div className="text-3xl font-semibold">Monitor domains safely.</div>
-              <div className="text-zinc-300 mt-2 leading-relaxed">
-                Hourly checks (24×/day) with adaptive backoff on rate limits.
-                Get instant signals via Telegram/Discord (optional).
+        <div className="flex-1 grid place-items-center px-4">
+          <div className="card p-8 w-full max-w-md glow bg-grid">
+            <h2 className="text-2xl font-bold mb-6 text-center">Sign-in</h2>
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
+                <input className="input" placeholder="admin@gnn.tr" value={email} onChange={(e)=>setEmail(e.target.value)} />
               </div>
-              <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
-                <div className="card p-4">
-                  <div className="text-zinc-400">Checks</div>
-                  <div className="font-semibold">24×/day (default)</div>
-                </div>
-                <div className="card p-4">
-                  <div className="text-zinc-400">Safety</div>
-                  <div className="font-semibold">Auto backoff</div>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
+                <input className="input" type="password" placeholder="••••••••" value={password} onChange={(e)=>setPassword(e.target.value)} />
               </div>
-            </div>
-
-            <div className="card p-6">
-              <h2 className="text-xl font-bold mb-4">Admin Sign-in</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
-                  <input className="input" placeholder="admin@gnn.tr" value={email} onChange={(e)=>setEmail(e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
-                  <input className="input" type="password" placeholder="••••••••" value={password} onChange={(e)=>setPassword(e.target.value)} />
-                </div>
-                <button className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3" onClick={doLogin}>
-                  Sign In
-                </button>
-              </div>
-              <div className="sep my-6" />
-              <div className="text-xs text-zinc-500 leading-relaxed text-center">
-                Cookie is <span className="font-mono">Secure</span> + <span className="font-mono">HttpOnly</span>.
-              </div>
+              <button className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3 font-bold mt-2" onClick={doLogin}>
+                Sign In
+              </button>
             </div>
           </div>
         </div>
+        <footer className="py-10 text-center text-xs text-zinc-500">
+          Backorder • always-free domain monitor
+        </footer>
       </div>
     );
   }

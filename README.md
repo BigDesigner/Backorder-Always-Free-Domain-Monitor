@@ -1,66 +1,81 @@
-# Backorder — Always‑Free Domain Monitor (Cloudflare Worker + D1) + Apache Frontend
+# 🚀 Backorder — Always-Free Domain Monitor
 
-A modern full‑stack **backorder** system (domain availability monitor + notifications) designed to run on **always‑free** services:
-- **Backend:** Cloudflare Workers (free) + **D1** (free SQLite DB) + **Cron triggers**
-- **Frontend:** React + Vite + Tailwind (static) served by **WHM/cPanel / AlmaLinux 8 / Apache**
+A professional-grade, full-stack domain availability monitor designed to run **100% free** on Cloudflare infrastructure. Get notified the second your dream domain becomes available!
 
-It checks domains up to **24× per day (hourly)** by default and will **automatically back off** if RDAP endpoints respond with rate limits.
-
-### Key Features
-✅ **Bulk Import:** Add dozens of domains at once (comma/newline separated).  
-✅ **Privacy Browser Ready:** Optimized for Firefox, Zen, and Mullvad browsers.  
-✅ **Database Maintenance:** One-click event cleanup and full factory reset (resets ID counters).  
-✅ **Premium UI:** Text-only status indicators with dot markers for a modern look.  
-✅ **Safe Staggering:** 1.2s delay between checks to prevent RDAP bans.  
-✅ **.tr Specialist:** Explicit routing for Turkish domains via IANA to avoid RIPE errors.  
-✅ **Auth:** Secure session management (PBKDF2 + D1 sessions).  
+> [!TIP]
+> This system is explicitly optimized for **Privacy-Focused Browsers** (Firefox, Zen, Mullvad) by routing traffic through your own custom API domain.
 
 ---
 
-## Architecture
+## 🛠️ 10-Minute "Step-by-Step" Setup Guide
 
-**Browser (Apache static)** → calls → **Cloudflare Worker API** (via `api.gnn.tr`) → **D1**  
-Worker cron runs hourly and checks due domains via RDAP.
+Follow these steps to deploy your own private monitoring system.
 
-> **Privacy Note:** Privacy-focused browsers block `*.workers.dev` by default. This project uses a custom domain `api.gnn.tr` to ensure 100% connectivity.
+### Step 1: Cloudflare Database (D1) Setup
+1. Log in to your [Cloudflare Dashboard](https://dash.cloudflare.com).
+2. Go to **Workers & Pages** > **D1**.
+3. Click **Create Database** > **Dashboard Database**.
+4. Name it `backorder_d1` and click **Create**.
+5. **Copy the ID** of your new database. You will need it in Step 2.
 
----
+### Step 2: Deploy the Backend API
+1. Open your terminal and clone the repo:
+   ```bash
+   git clone https://github.com/BigDesigner/Backorder-Always-Free-Domain-Monitor.git
+   cd Backorder-Always-Free-Domain-Monitor/worker
+   ```
+2. Install dependencies: `npm install`
+3. Open `wrangler.toml` and paste your **Database ID** from Step 1 into the `database_id` field.
+4. Login to Cloudflare via terminal: `npx wrangler login`
+5. Initialize the database: `npx wrangler d1 migrations apply backorder_d1 --remote`
+6. Deploy the API: `npx wrangler deploy`
 
-## Maintenance & Housekeeping
+### Step 3: Configure Security & Notifications (Secrets)
+Run these commands in the `/worker` folder to set your private settings:
 
-Found in the **Settings** tab:
-- **Clean Events (>30 days):** Keeps your D1 storage lean (stays under 500MB free limit).
-- **Factory Reset:** Purges everything and resets the `sqlite_sequence` so IDs start from 1.
-
----
-
-## 1) Backend (Cloudflare Worker + D1)
-
-### Setup
-1. `cd worker && npm install`
-2. `npx wrangler d1 create backorder_d1` (Copy ID to `wrangler.toml`)
-3. `npx wrangler d1 migrations apply backorder_d1`
-4. Deploy: `npx wrangler deploy`
-
-### Secrets
 ```bash
-npx wrangler secret put ADMIN_EMAIL
-npx wrangler secret put ADMIN_PASSWORD
+# Admin Credentials (Mandatory)
+npx wrangler secret put ADMIN_EMAIL     # Your login email
+npx wrangler secret put ADMIN_PASSWORD  # Your login password
+
+# Notifications (Optional but Recommended)
 npx wrangler secret put TELEGRAM_BOT_TOKEN
 npx wrangler secret put TELEGRAM_CHAT_ID
 npx wrangler secret put DISCORD_WEBHOOK_URL
 ```
 
+> [!IMPORTANT]
+> To get a Telegram Chat ID, message `@userinfobot` on Telegram after creating your bot via `@BotFather`.
+
+### Step 4: Deploy the Frontend (Dashboard)
+1. Go to the `/frontend` folder: `cd ../frontend`
+2. Install dependencies: `npm install`
+3. **Set your API URL:** Rename `.env.production` and update the `VITE_API_BASE` to your Worker's URL (e.g., `https://api.yourdomain.com`).
+4. Build the project: `npm run build`
+5. **Upload:** Take the contents of the `dist/` folder and upload them to your Apache server or cPanel `public_html`.
+
 ---
 
-## 2) Frontend (Apache)
+## ✨ Why this system is better?
 
-1. `cd frontend && npm install`
-2. Update `API_BASE` in `src/lib/api.ts` to your custom domain.
-3. `npm run build`
-4. Upload `dist/` contents to your server.
+| Feature | Benefit |
+| :--- | :--- |
+| **Adaptive Backoff** | Automatically slows down if RDAP servers block you, then speeds back up. |
+| **.tr Specialist** | Handles Turkish domains natively using specific IANA routing. |
+| **Bulk Import** | Paste 100 domains at once; it handles the staggering for you. |
+| **Safety Lock** | Destructive actions require a "Type to Confirm" pass-phrase. |
+| **No Database Costs** | Uses Cloudflare D1 which is free for millions of rows. |
 
 ---
 
-## License
-MIT
+## 🧹 Maintenance & Best Practices
+
+To keep the system running perfectly on the **Free Tier**:
+* **Cron Trigger:** The system checks domains every hour by default. You can change this in `wrangler.toml` under `[triggers]`.
+* **Database Purge:** Every 30 days, go to the **Settings** tab in your dashboard and click **Clean Events** to keep the database small and fast.
+* **Password Change:** Simply update your `ADMIN_PASSWORD` secret in Cloudflare and redeploy. The system will automatically detect it and log everyone out for security.
+
+---
+
+## 📜 License
+MIT License. Built with ❤️ for the always-free community.

@@ -297,7 +297,9 @@ app.post("/api/maintenance/reset", async (c) => {
     c.env.DB.prepare("DELETE FROM events"),
     c.env.DB.prepare("DELETE FROM domains"),
     c.env.DB.prepare("DELETE FROM sessions"),
-    c.env.DB.prepare("DELETE FROM sqlite_sequence WHERE name IN ('events', 'domains', 'sessions')")
+    c.env.DB.prepare("DELETE FROM users"),
+    c.env.DB.prepare("DELETE FROM settings"),
+    c.env.DB.prepare("DELETE FROM sqlite_sequence")
   ]);
   
   return c.json({ ok: true });

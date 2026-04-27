@@ -7,7 +7,12 @@ export type RdapResult =
   | { ok: false; status: "error"; http: number; error: string };
 
 function normalizeDomain(input: string): string {
-  return input.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+  // Strip protocol and trailing slash
+  let clean = input.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
+  // SEC-13: Deep Sanitization - allow only alphanumeric, hyphen, and dot.
+  // This prevents malicious path traversals (e.g., example.com/../../) from being sent to RDAP providers.
+  clean = clean.replace(/[^a-z0-9.-]/g, "");
+  return clean;
 }
 
 const RDAP_PROVIDERS = [

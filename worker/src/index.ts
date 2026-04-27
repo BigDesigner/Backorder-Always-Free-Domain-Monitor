@@ -10,10 +10,19 @@ const app = new Hono<{ Bindings: Env }>();
 app.use("*", cors({
   origin: (origin) => {
     if (!origin) return null;
-    if (origin.endsWith("gnn.tr") || origin.endsWith("pages.dev")) return origin;
+    const url = new URL(origin);
+    const host = url.hostname;
+    // Explicitly allow our known domains and subdomains
+    if (host === "gnn.tr" || host.endsWith(".gnn.tr") || host.endsWith(".pages.dev") || host === "localhost") {
+      return origin;
+    }
     return null;
   },
-  credentials: true
+  credentials: true,
+  allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Authorization", "Cookie"],
+  exposeHeaders: ["Set-Cookie"],
+  maxAge: 86400, // Preflight cache for 24h
 }));
 
 app.get("/api/health", async (c) => {

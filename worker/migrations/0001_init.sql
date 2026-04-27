@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS domains (
   last_rdap_http INTEGER,
   last_error TEXT,
   consecutive_errors INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER        -- Domain expiration date (Unix timestamp)
 );
 
 -- Events
@@ -38,7 +39,7 @@ CREATE TABLE IF NOT EXISTS events (
   type TEXT NOT NULL,       -- info|available|registered|rate_limited|error|auth
   message TEXT NOT NULL,
   created_at INTEGER NOT NULL,
-  FOREIGN KEY (domain_id) REFERENCES domains(id) ON DELETE SET NULL
+  FOREIGN KEY (domain_id) REFERENCES domains(id) ON DELETE CASCADE
 );
 
 -- Key-value settings

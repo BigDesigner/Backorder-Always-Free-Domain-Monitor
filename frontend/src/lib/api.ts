@@ -51,7 +51,9 @@ export const api = {
   deleteDomain: (id: number) => req<{ok:boolean}>(`/api/domains/${id}/delete`, { method: "POST", body: JSON.stringify({}) }),
   bulkAddDomains: (domains: string[], intervalMin?: number) => req<{ok:boolean;results:any}>(`/api/bulk-domains`, { method: "POST", body: JSON.stringify({ domains, intervalMin }) }),
   events: (limit = 200) => req<{ok:boolean;events:Event[]}>(`/api/events?limit=${limit}`),
-  testNotify: () => req<{ok:boolean}>(`/api/test-notify`, { method: "POST", body: JSON.stringify({}) })
+  testNotify: () => req<{ok:boolean}>(`/api/test-notify`, { method: "POST", body: JSON.stringify({}) }),
+  cleanEvents: () => req<{ok:boolean;removed:number}>(`/api/maintenance/clean-events`, { method: "POST", body: JSON.stringify({}) }),
+  factoryReset: () => req<{ok:boolean}>(`/api/maintenance/reset`, { method: "POST", body: JSON.stringify({}) }),
 };
 
 export function fmtTime(tsSec: number | null | undefined): string {

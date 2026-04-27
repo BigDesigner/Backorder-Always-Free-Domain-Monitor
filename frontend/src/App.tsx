@@ -515,6 +515,37 @@ function Shell() {
               }}>
                 🔔 Send Test Notification
               </button>
+
+              <div className="sep my-8" />
+              <div className="text-xl font-semibold text-rose-400">Database Maintenance</div>
+              <div className="text-xs text-zinc-400 mt-1 mb-4">Keep your D1 database lean and fast.</div>
+              
+              <div className="space-y-3">
+                <button className="btn w-full py-2.5 text-sm bg-white/5 hover:bg-white/10 border-white/5" onClick={async () => {
+                  try {
+                    const res = await api.cleanEvents();
+                    toast.push(`Cleaned ${res.removed} old events.`);
+                    await refreshAll();
+                  } catch (e: any) {
+                    toast.push(e.message);
+                  }
+                }}>
+                  🧹 Clean Events (>30 days)
+                </button>
+
+                <button className="btn w-full py-2.5 text-sm bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 text-rose-300" onClick={async () => {
+                  if (!confirm("⚠️ FACTORY RESET: This will delete ALL domains and ALL events. Are you absolutely sure?")) return;
+                  try {
+                    await api.factoryReset();
+                    toast.push("System reset complete.");
+                    window.location.reload();
+                  } catch (e: any) {
+                    toast.push(e.message);
+                  }
+                }}>
+                  💀 Factory Reset
+                </button>
+              </div>
             </div>
           </div>
         )}

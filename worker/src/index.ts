@@ -246,6 +246,33 @@ app.post("/api/test-notify", async (c) => {
   return c.json({ ok: true });
 });
 
+app.post("/api/maintenance/clean-events", async (c) => {
+  await ensureAdmin(c.env);
+  const user = await requireAuth(c.env, c.req.raw);
+  if (!user) return c.json({ ok: false }, 401);
+
+  const thirtyDaysAgo = nowSec() - (30 * 24 * 3600);
+  const res = await c.env.DB.prepare("DELETE FROM events WHERE created_at < ?").bind(thirtyDaysAgo).run();
+  await addEvent(c.env, null, "info", `Database cleanup by ${user.email}: removed old events.`);
+  
+  return c.json({ ok: true, removed: res.meta.changes });
+});
+
+app.post("/api/maintenance/reset", async (c) => {
+  await ensureAdmin(c.env);
+  const user = await requireAuth(c.env, c.req.raw);
+  if (!user) return c.json({ ok: false }, 401);
+
+  // Dangerous: Delete everything
+  await c.env.DB.batch([
+    c.env.DB.prepare("DELETE FROM events"),
+    c.env.DB.prepare("DELETE FROM domains"),
+    c.env.DB.prepare("DELETE FROM sessions")
+  ]);
+  
+  return c.json({ ok: true });
+});
+
 // Cron trigger
 export default {
   fetch: app.fetch,

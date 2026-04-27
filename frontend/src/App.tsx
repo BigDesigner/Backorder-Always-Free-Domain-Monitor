@@ -430,38 +430,7 @@ function Shell() {
               </div>
             </div>
 
-            <div className="mt-6 grid lg:grid-cols-2 gap-6">
-              <div className="card p-5">
-                <div className="text-lg font-semibold">Latest activity</div>
-                <div className="text-xs text-zinc-400 mb-3">Most recent events</div>
-                <div className="sep mb-4" />
-                <div className="space-y-3 max-h-[420px] overflow-auto pr-1">
-                  {events.slice(0, 20).map(ev => (
-                    <div key={ev.id} className="flex gap-3">
-                      <span className={classNames("badge", eventPill(ev.type))}>{ev.type}</span>
-                      <div>
-                        <div className="text-sm">{ev.message}</div>
-                        <div className="text-xs text-zinc-500">{fmtTime(ev.created_at)}</div>
-                      </div>
-                    </div>
-                  ))}
-                  {events.length === 0 && <div className="text-zinc-400">No events yet.</div>}
-                </div>
-              </div>
-
-              <div className="card p-5 bg-grid">
-                <div className="text-lg font-semibold">Ops notes</div>
-                <div className="text-xs text-zinc-400 mb-3">Rate limits & reliability</div>
-                <div className="sep mb-4" />
-                <ul className="text-sm text-zinc-200 space-y-2 leading-relaxed">
-                  <li>• Default checks are hourly (24×/day) and are usually safe.</li>
-                  <li>• If the RDAP endpoint responds with <span className="font-mono">429</span>, the domain backoffs to 6h → 12h → 24h.</li>
-                  <li>• Errors backoff to 2h → 6h → 12h. All logged.</li>
-                  <li>• You can reduce interval per domain from the dropdown.</li>
-                  <li>• Notifications are optional via Telegram/Discord secrets.</li>
-                </ul>
-              </div>
-            </div>
+            {/* Removed Latest Activity and moved Ops Notes to About tab */}
           </>
         )}
 
@@ -506,16 +475,22 @@ function Shell() {
             <div className="card p-6">
               <div className="text-xl font-semibold">What you deployed</div>
               <div className="text-zinc-300 mt-2 leading-relaxed">
-                A full‑stack backorder monitor that runs on Cloudflare’s free tier for backend and your Apache server for UI.
-                It is designed to be simple, safe, and auditable.
+                A full‑stack backorder monitor that runs on Cloudflare’s free tier for backend and your custom domain for API.
               </div>
               <div className="sep my-5" />
               <div className="text-sm text-zinc-200 space-y-2">
                 <div>• Backend: Worker + D1 + hourly cron</div>
-                <div>• Frontend: Vite static build + Tailwind</div>
-                <div>• Auth: PBKDF2 password hashing + secure session cookie</div>
-                <div>• Notifications: Telegram/Discord (optional, free)</div>
+                <div>• API: api.gnn.tr (Custom Domain)</div>
+                <div>• Auth: Secure session cookies + PBKDF2</div>
               </div>
+              
+              <div className="sep my-5" />
+              <div className="text-xl font-semibold">Ops notes</div>
+              <ul className="text-sm text-zinc-200 space-y-2 mt-3 leading-relaxed">
+                <li>• Default checks are hourly (24×/day) and are usually safe.</li>
+                <li>• If the RDAP responds with <span className="font-mono text-amber-400">429</span>, the domain backoffs automatically.</li>
+                <li>• You can reduce interval per domain from the dropdown.</li>
+              </ul>
             </div>
 
             <div className="card p-6 bg-grid">
@@ -525,9 +500,8 @@ function Shell() {
               </div>
               <div className="sep my-5" />
               <ul className="text-sm text-zinc-200 space-y-2 leading-relaxed">
-                <li>• Put the frontend behind HTTPS (Cloudflare proxy or your cert).</li>
-                <li>• Restrict CORS origin in Worker (edit <span className="font-mono">cors()</span>).</li>
-                <li>• Use a strong admin password and rotate periodically.</li>
+                <li>• Put the frontend behind HTTPS.</li>
+                <li>• Use a strong admin password.</li>
                 <li>• Consider using a dedicated RDAP base per TLD if needed.</li>
               </ul>
               <div className="sep my-5" />

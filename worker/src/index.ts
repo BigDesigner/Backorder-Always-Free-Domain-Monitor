@@ -8,21 +8,12 @@ import { runScheduler } from "./scheduler";
 const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", cors({
-  origin: (origin) => {
-    if (!origin) return null;
-    const url = new URL(origin);
-    const host = url.hostname;
-    // Explicitly allow our known domains and subdomains
-    if (host === "gnn.tr" || host.endsWith(".gnn.tr") || host.endsWith(".pages.dev") || host === "localhost") {
-      return origin;
-    }
-    return null;
-  },
+  origin: (origin) => origin, // Return requested origin directly for diagnosis
   credentials: true,
   allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization", "Cookie"],
+  allowHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
   exposeHeaders: ["Set-Cookie"],
-  maxAge: 86400, // Preflight cache for 24h
+  maxAge: 86400,
 }));
 
 app.get("/api/health", async (c) => {

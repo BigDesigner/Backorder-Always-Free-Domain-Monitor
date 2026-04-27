@@ -125,11 +125,11 @@ function Shell() {
     if (!confirm(`Are you sure you want to remove ${d.domain}?`)) return;
     
     try {
-      toast.push(`Removing ${d.domain}...`);
+      toast.push(`Attempting to delete ID: ${d.id}...`);
       await api.deleteDomain(d.id);
       
-      // Wait a tiny bit for D1 to finalize the write across replicas
-      await new Promise(r => setTimeout(r, 500));
+      // Wait a bit longer for sync
+      await new Promise(r => setTimeout(r, 800));
       
       toast.push("Successfully removed.");
       await refreshAll();

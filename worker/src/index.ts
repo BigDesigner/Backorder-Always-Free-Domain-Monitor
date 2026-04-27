@@ -151,7 +151,11 @@ app.post("/api/domains/:id/delete", async (c) => {
   const res = await c.env.DB.prepare("DELETE FROM domains WHERE id = CAST(? AS INTEGER)").bind(id).run();
   
   if (!res.success) {
-    return c.json({ ok: false, error: "Database error during deletion" }, 500);
+    return c.json({ ok: false, error: "Database execution failed" }, 500);
+  }
+
+  if (res.meta.changes === 0) {
+    return c.json({ ok: false, error: `No domain found with ID: ${id}` }, 404);
   }
 
   await addEvent(c.env, null, "info", `Domain (ID: ${id}) removed by ${user.email}`);

@@ -681,8 +681,6 @@ function Shell() {
     </div>
   );
 }
-  );
-}
 
 export default function App() {
   return (

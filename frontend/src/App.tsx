@@ -530,7 +530,7 @@ function Shell() {
                     toast.push(e.message);
                   }
                 }}>
-                  🧹 Clean Events (>30 days)
+                  🧹 Clean Events (&gt; 30 days)
                 </button>
 
                 <button className="btn w-full py-2.5 text-sm bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 text-rose-300" onClick={async () => {

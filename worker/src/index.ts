@@ -139,6 +139,7 @@ app.patch("/api/domains/:id", async (c) => {
   return c.json({ ok: true, domain: d2 });
 });
 
+// Reliable deletion endpoint - handles both ID and domain name for safety
 app.post("/api/domains/:id/delete", async (c) => {
   await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);

@@ -208,10 +208,9 @@ app.post("/api/bulk-domains", async (c) => {
     }
 
     try {
-      const next = now + (results.added * 5); // Stagger initial checks by 5 seconds
       await c.env.DB.prepare(
         "INSERT INTO domains(domain, label, enabled, check_interval_min, next_check_at, last_checked_at, last_status, created_at) VALUES(?,?,?,?,?,?,?,?)"
-      ).bind(domain, null, 1, intervalMin, next, null, "unknown", now).run();
+      ).bind(domain, null, 1, intervalMin, now, null, "unknown", now).run();
       
       results.added++;
     } catch (e: any) {

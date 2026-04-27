@@ -19,15 +19,20 @@ export async function runScheduler(env: Env): Promise<{ checked: number; due: nu
   const now = nowSec();
 
   const dueRes = await env.DB.prepare(
-    "SELECT * FROM domains WHERE enabled = 1 AND next_check_at <= ? ORDER BY next_check_at ASC LIMIT 50"
+    "SELECT * FROM domains WHERE enabled = 1 AND next_check_at <= ? ORDER BY next_check_at ASC LIMIT 20"
   ).bind(now).all<DomainRow>();
 
   const due = dueRes.results ?? [];
   let checked = 0;
 
   for (const d of due) {
+    // Add a small 1.2s delay between checks to respect RDAP servers
+    if (checked > 0) {
+      await new Promise(r => setTimeout(r, 1200));
+    }
+    
     checked++;
-    await env.DB.prepare("UPDATE domains SET last_checked_at = ? WHERE id = ?").bind(now, d.id).run();
+    await env.DB.prepare("UPDATE domains SET last_checked_at = ? WHERE id = ?").bind(nowSec(), d.id).run();
 
     try {
       const res = await checkDomain(env, d.domain);

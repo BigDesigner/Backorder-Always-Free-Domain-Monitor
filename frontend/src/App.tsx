@@ -183,7 +183,7 @@ function Shell() {
           <div className="flex items-center gap-2">
             <button className={classNames("btn", tab==="dashboard" && "bg-white/20")} onClick={() => setTab("dashboard")}>Dashboard</button>
             <button className={classNames("btn", tab==="activity" && "bg-white/20")} onClick={() => setTab("activity")}>Activity</button>
-            <button className={classNames("btn", tab==="about" && "bg-white/20")} onClick={() => setTab("about")}>About</button>
+            <button className={classNames("btn", tab==="settings" && "bg-white/20")} onClick={() => setTab("settings")}>Settings</button>
             {authed && <button className="btn" onClick={() => setAddOpen(true)}>+ Add</button>}
             {authed && <button className="btn" onClick={doLogout}>Logout</button>}
           </div>
@@ -470,42 +470,56 @@ function Shell() {
           </div>
         )}
 
-        {tab === "about" && (
+        {tab === "settings" && (
           <div className="grid lg:grid-cols-2 gap-6">
             <div className="card p-6">
-              <div className="text-xl font-semibold">What you deployed</div>
-              <div className="text-zinc-300 mt-2 leading-relaxed">
-                A full‑stack backorder monitor that runs on Cloudflare’s free tier for backend and your custom domain for API.
-              </div>
+              <div className="text-xl font-semibold">Infrastructure</div>
+              <div className="text-zinc-400 text-sm mt-1">Core system architecture</div>
               <div className="sep my-5" />
-              <div className="text-sm text-zinc-200 space-y-2">
-                <div>• Backend: Worker + D1 + hourly cron</div>
-                <div>• API: api.gnn.tr (Custom Domain)</div>
-                <div>• Auth: Secure session cookies + PBKDF2</div>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-zinc-400">Database</span>
+                  <span className="font-mono text-zinc-200">Cloudflare D1 (SQLite)</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-zinc-400">Backend</span>
+                  <span className="font-mono text-zinc-200">Worker (Vite/TS)</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-zinc-400">API Endpoint</span>
+                  <span className="font-mono text-sky-400">api.gnn.tr</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-zinc-400">Check Interval</span>
+                  <span className="font-mono text-zinc-200">Adaptive (min. 15m)</span>
+                </div>
               </div>
               
-              <div className="sep my-5" />
-              <div className="text-xl font-semibold">Ops notes</div>
-              <ul className="text-sm text-zinc-200 space-y-2 mt-3 leading-relaxed">
-                <li>• Default checks are hourly (24×/day) and are usually safe.</li>
-                <li>• If the RDAP responds with <span className="font-mono text-amber-400">429</span>, the domain backoffs automatically.</li>
-                <li>• You can reduce interval per domain from the dropdown.</li>
+              <div className="sep my-6" />
+              <div className="text-xl font-semibold">Operational Notes</div>
+              <ul className="text-sm text-zinc-300 space-y-3 mt-4 leading-relaxed">
+                <li className="flex gap-2">
+                  <span className="text-zinc-500">•</span>
+                  <span>Default checks are hourly. Adaptive backoff applies on rate limits (6h → 12h → 24h).</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-zinc-500">•</span>
+                  <span>Errors automatically trigger a 2h backoff to prevent system spam.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-zinc-500">•</span>
+                  <span>System is designed to stay within Cloudflare Always-Free tier limits.</span>
+                </li>
               </ul>
             </div>
 
             <div className="card p-6 bg-grid">
-              <div className="text-xl font-semibold">Hardening tips</div>
-              <div className="text-zinc-300 mt-2 leading-relaxed">
-                Keep it always‑free but still professional:
-              </div>
+              <div className="text-xl font-semibold">System Utilities</div>
+              <div className="text-zinc-400 text-sm mt-1">Notifications & maintenance</div>
+              
               <div className="sep my-5" />
-              <ul className="text-sm text-zinc-200 space-y-2 leading-relaxed">
-                <li>• Put the frontend behind HTTPS.</li>
-                <li>• Use a strong admin password.</li>
-                <li>• Consider using a dedicated RDAP base per TLD if needed.</li>
-              </ul>
-              <div className="sep my-5" />
-              <button className="btn w-full py-3 bg-white/10 hover:bg-white/20" onClick={async () => {
+              <div className="text-sm font-medium text-zinc-300 mb-3 uppercase tracking-wider">Test Notification</div>
+              <button className="btn w-full py-3 bg-white/5 hover:bg-white/10 border-white/10" onClick={async () => {
                 try {
                   await api.testNotify();
                   toast.push("Test notification sent!");
@@ -517,8 +531,7 @@ function Shell() {
               </button>
 
               <div className="sep my-8" />
-              <div className="text-xl font-semibold text-rose-400">Database Maintenance</div>
-              <div className="text-xs text-zinc-400 mt-1 mb-4">Keep your D1 database lean and fast.</div>
+              <div className="text-sm font-medium text-rose-400 mb-3 uppercase tracking-wider">Database Maintenance</div>
               
               <div className="space-y-3">
                 <button className="btn w-full py-2.5 text-sm bg-white/5 hover:bg-white/10 border-white/5" onClick={async () => {
@@ -534,7 +547,7 @@ function Shell() {
                 </button>
 
                 <button className="btn w-full py-2.5 text-sm bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 text-rose-300" onClick={async () => {
-                  if (!confirm("⚠️ FACTORY RESET: This will delete ALL domains and ALL events. Are you absolutely sure?")) return;
+                  if (!confirm("⚠️ FACTORY RESET: This will delete ALL domains, ALL events, and reset ID counters. Are you absolutely sure?")) return;
                   try {
                     await api.factoryReset();
                     toast.push("System reset complete.");
@@ -543,7 +556,7 @@ function Shell() {
                     toast.push(e.message);
                   }
                 }}>
-                  💀 Factory Reset
+                  💀 Factory Reset System
                 </button>
               </div>
             </div>

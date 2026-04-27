@@ -4,6 +4,29 @@ import { classNames, statusPill, eventPill } from "./lib/ui";
 import { Modal } from "./components/Modal";
 import { ToastProvider, useToast } from "./components/Toast";
 
+function GlobalFooter() {
+  return (
+    <footer className="py-10 text-center text-xs text-zinc-500 flex flex-col items-center gap-3 mt-auto">
+      <div>Backorder • built for always-free operations</div>
+      <a
+        href="https://github.com/BigDesigner/Backorder-Always-Free-Domain-Monitor"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="GitHub Repository"
+        className="opacity-80 hover:opacity-100 transition"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className="w-6 h-6 fill-white"
+        >
+          <path d="M12 .5C5.73.5.5 5.73.5 12c0 5.1 3.29 9.42 7.86 10.96.58.1.79-.25.79-.56v-2.02c-3.2.7-3.88-1.54-3.88-1.54-.53-1.35-1.29-1.71-1.29-1.71-1.06-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.77.11 3.06.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.27 5.69.42.36.79 1.07.79 2.16v3.2c0 .31.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"/>
+        </svg>
+      </a>
+    </footer>
+  );
+}
+
 function Shell() {
 	useEffect(() => {
   const t = setInterval(() => {
@@ -615,24 +638,7 @@ function Shell() {
       </Modal>
       </main>
 
-      <footer className="py-10 text-center text-xs text-zinc-500 flex flex-col items-center gap-3 mt-auto">
-        <div>Backorder • built for always-free operations</div>
-        <a
-          href="https://github.com/BigDesigner/Backorder-Always-Free-Domain-Monitor"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="GitHub Repository"
-          className="opacity-80 hover:opacity-100 transition"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            className="w-6 h-6 fill-white"
-          >
-            <path d="M12 .5C5.73.5.5 5.73.5 12c0 5.1 3.29 9.42 7.86 10.96.58.1.79-.25.79-.56v-2.02c-3.2.7-3.88-1.54-3.88-1.54-.53-1.35-1.29-1.71-1.29-1.71-1.06-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.41-1.27.74-1.56-2.56-.29-5.26-1.28-5.26-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.77.11 3.06.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.27 5.69.42.36.79 1.07.79 2.16v3.2c0 .31.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"/>
-          </svg>
-        </a>
-      </footer>
+      <GlobalFooter />
     </div>
   );
 }

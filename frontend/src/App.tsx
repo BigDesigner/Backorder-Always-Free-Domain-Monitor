@@ -577,49 +577,9 @@ function Shell() {
         )}
       </div>
 
-      </Modal>
+      </main>
 
-      <Modal open={resetOpen} title="Dangerous Action: Factory Reset" onClose={() => setResetOpen(false)}>
-        <div className="space-y-4">
-          <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-200 text-sm">
-            <strong>Warning:</strong> Deleting everything is permanent and cannot be undone. All domains and history will be lost.
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-2">
-              Type <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-200 select-all">yes-i-know-all-database-rows-deleted</code> to confirm:
-            </label>
-            <input 
-              type="text" 
-              className="input border-rose-500/30 focus:border-rose-500" 
-              placeholder="Type confirmation here..."
-              value={resetInput}
-              onChange={e => setResetInput(e.target.value)}
-              autoFocus
-            />
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button className="btn flex-1" onClick={() => setResetOpen(false)}>Cancel</button>
-            <button 
-              className="btn flex-1 bg-rose-600 hover:bg-rose-500 text-white border-none disabled:opacity-30 disabled:cursor-not-allowed font-bold"
-              disabled={resetInput !== "yes-i-know-all-database-rows-deleted"}
-              onClick={async () => {
-                try {
-                  await api.factoryReset();
-                  toast.push("System has been fully reset.");
-                  setResetOpen(false);
-                  window.location.reload();
-                } catch (e: any) {
-                  toast.push(e.message);
-                }
-              }}
-            >
-              Destroy Everything
-            </button>
-          </div>
-        </div>
-      </Modal>
+      <Modal open={addOpen} title="Add Domain" onClose={() => setAddOpen(false)}>
         <div className="flex bg-black/20 p-1 rounded-lg mb-4">
           <button 
             onClick={() => setBulkMode(false)}
@@ -674,10 +634,53 @@ function Shell() {
           </form>
         )}
       </Modal>
-      </main>
+
+      <Modal open={resetOpen} title="Dangerous Action: Factory Reset" onClose={() => setResetOpen(false)}>
+        <div className="space-y-4">
+          <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-200 text-sm">
+            <strong>Warning:</strong> Deleting everything is permanent and cannot be undone. All domains and history will be lost.
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-zinc-400 mb-2">
+              Type <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-200 select-all">yes-i-know-all-database-rows-deleted</code> to confirm:
+            </label>
+            <input 
+              type="text" 
+              className="input border-rose-500/30 focus:border-rose-500" 
+              placeholder="Type confirmation here..."
+              value={resetInput}
+              onChange={e => setResetInput(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button className="btn flex-1" onClick={() => setResetOpen(false)}>Cancel</button>
+            <button 
+              className="btn flex-1 bg-rose-600 hover:bg-rose-500 text-white border-none disabled:opacity-30 disabled:cursor-not-allowed font-bold"
+              disabled={resetInput !== "yes-i-know-all-database-rows-deleted"}
+              onClick={async () => {
+                try {
+                  await api.factoryReset();
+                  toast.push("System has been fully reset.");
+                  setResetOpen(false);
+                  window.location.reload();
+                } catch (e: any) {
+                  toast.push(e.message);
+                }
+              }}
+            >
+              Destroy Everything
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <GlobalFooter />
     </div>
+  );
+}
   );
 }
 

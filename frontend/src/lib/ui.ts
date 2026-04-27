@@ -11,7 +11,7 @@ export function statusPill(status: string | null) {
     rate_limited: "text-amber-400",
     error: "text-rose-400"
   };
-  const base = "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide shrink-0";
+  const base = "inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide shrink-0 bg-transparent border-none shadow-none";
   return classNames(base, map[s] || map.unknown);
 }
 
@@ -25,6 +25,6 @@ export function eventPill(type: string) {
     error: "text-rose-400",
     auth: "text-fuchsia-400"
   };
-  const base = "inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider shrink-0";
+  const base = "inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider shrink-0 bg-transparent border-none shadow-none";
   return classNames(base, map[t] || map.info);
 }

@@ -4,6 +4,23 @@ This file tracks the historical development milestones, verified releases, and c
 
 ## Release History & Achievements
 
+### [1.7.0] - 2026-07-04
+#### 🛠️ Tooling & Linting Coherence
+- **Missing ESLint Setup**: Configured a modern `eslint.config.js` for TypeScript + ESLint v10 in the `worker` directory, correcting missing configuration errors.
+- **Lint Issue Fix**: Fixed a `no-useless-assignment` warning inside `rdap.ts` to ensure build scripts pass without syntax errors.
+
+#### 📊 Safety/Health Score Indicators
+- **Interval Health Dots**: Added a text-based indicator with colored dots (`●`) inside the main domain dashboard and adding modals (Single and Bulk) to give users feedback on check interval risks:
+  - `● High Load` (30 min - Yellow/Amber)
+  - `● Optimal` (60 - 360 min - Green)
+  - `● Eco` (> 360 min - Blue)
+
+#### 🌐 WHOIS Fallback Client
+- **TCP Outbound Fallback**: Implemented direct TCP WHOIS client in Cloudflare Workers using the native `cloudflare:sockets` `connect()` API.
+- **TLD Routing & Parsing**: Added an automated query to `whois.iana.org` when the TLD is not mapped in a hardcoded list of standard TLD servers, looking up the appropriate registry endpoint dynamically.
+- **Failover Logic**: Intercepts HTTP network exceptions or non-200/404/429 HTTP statuses in the standard RDAP client and routes queries through the WHOIS fallback client.
+- **Availability & Expiry Tracking**: Parses raw WHOIS text for registry expiration dates and availability phrases, formatting them into mock RDAP event structures to preserve compatibility with existing backend scheduler logic.
+
 ### [1.6.0] - 2026-04-27
 #### 🛡️ Deep Security Hardening (Audit v1.5.1)
 - **Security Audit Score: 10/10**: Completed a rigorous end-to-end security inspection of the entire stack.

@@ -293,8 +293,33 @@ function Shell() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1 text-xs uppercase tracking-wider">Interval (min)</label>
-              <input type="number" className="input" value={newInterval} onChange={e => setNewInterval(Number(e.target.value))} />
+              <label className="block text-sm font-medium text-zinc-400 mb-1 text-xs uppercase tracking-wider">Interval</label>
+              <select
+                className="input bg-black/30 w-full"
+                value={newInterval}
+                onChange={e => setNewInterval(Number(e.target.value))}
+              >
+                {[30, 60, 120, 240, 360, 720, 1440].map(m => (
+                  <option key={m} value={m}>{m} min</option>
+                ))}
+              </select>
+              <div className="flex items-center gap-1.5 text-xs mt-1">
+                {newInterval === 30 && (
+                  <span className="text-amber-400 flex items-center gap-1">
+                    <span>●</span> High Load
+                  </span>
+                )}
+                {newInterval >= 60 && newInterval <= 360 && (
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <span>●</span> Optimal
+                  </span>
+                )}
+                {newInterval > 360 && (
+                  <span className="text-sky-400 flex items-center gap-1">
+                    <span>●</span> Eco
+                  </span>
+                )}
+              </div>
             </div>
             <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3 font-bold">
               Import List
@@ -311,8 +336,33 @@ function Shell() {
               <input type="text" className="input" placeholder="Client X" value={newLabel} onChange={e => setNewLabel(e.target.value)} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1 text-xs uppercase tracking-wider">Interval (min)</label>
-              <input type="number" className="input" value={newInterval} onChange={e => setNewInterval(Number(e.target.value))} />
+              <label className="block text-sm font-medium text-zinc-400 mb-1 text-xs uppercase tracking-wider">Interval</label>
+              <select
+                className="input bg-black/30 w-full"
+                value={newInterval}
+                onChange={e => setNewInterval(Number(e.target.value))}
+              >
+                {[30, 60, 120, 240, 360, 720, 1440].map(m => (
+                  <option key={m} value={m}>{m} min</option>
+                ))}
+              </select>
+              <div className="flex items-center gap-1.5 text-xs mt-1">
+                {newInterval === 30 && (
+                  <span className="text-amber-400 flex items-center gap-1">
+                    <span>●</span> High Load
+                  </span>
+                )}
+                {newInterval >= 60 && newInterval <= 360 && (
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <span>●</span> Optimal
+                  </span>
+                )}
+                {newInterval > 360 && (
+                  <span className="text-sky-400 flex items-center gap-1">
+                    <span>●</span> Eco
+                  </span>
+                )}
+              </div>
             </div>
             <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3 font-bold">
               Start Monitoring
@@ -390,7 +440,7 @@ function Shell() {
                         </td>
                         <td className="px-4 py-3">
                           <select
-                            className="input bg-black/30"
+                            className="input bg-black/30 w-full mb-1"
                             value={d.check_interval_min}
                             onChange={(e)=>setIntervalMin(d, parseInt(e.target.value,10))}
                           >
@@ -398,6 +448,23 @@ function Shell() {
                               <option key={m} value={m}>{m} min</option>
                             ))}
                           </select>
+                          <div className="flex items-center gap-1.5 text-xs">
+                            {d.check_interval_min === 30 && (
+                              <span className="text-amber-400 flex items-center gap-1 select-none">
+                                <span>●</span> High Load
+                              </span>
+                            )}
+                            {d.check_interval_min >= 60 && d.check_interval_min <= 360 && (
+                              <span className="text-emerald-400 flex items-center gap-1 select-none">
+                                <span>●</span> Optimal
+                              </span>
+                            )}
+                            {d.check_interval_min > 360 && (
+                              <span className="text-sky-400 flex items-center gap-1 select-none">
+                                <span>●</span> Eco
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3">
                           {d.expires_at ? (
@@ -607,8 +674,33 @@ function Shell() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1">Interval (min)</label>
-              <input type="number" className="input" value={newInterval} onChange={e => setNewInterval(Number(e.target.value))} />
+              <label className="block text-sm font-medium text-zinc-400 mb-1">Interval</label>
+              <select
+                className="input bg-black/30 w-full"
+                value={newInterval}
+                onChange={e => setNewInterval(Number(e.target.value))}
+              >
+                {[30, 60, 120, 240, 360, 720, 1440].map(m => (
+                  <option key={m} value={m}>{m} min</option>
+                ))}
+              </select>
+              <div className="flex items-center gap-1.5 text-xs mt-1">
+                {newInterval === 30 && (
+                  <span className="text-amber-400 flex items-center gap-1">
+                    <span>●</span> High Load
+                  </span>
+                )}
+                {newInterval >= 60 && newInterval <= 360 && (
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <span>●</span> Optimal
+                  </span>
+                )}
+                {newInterval > 360 && (
+                  <span className="text-sky-400 flex items-center gap-1">
+                    <span>●</span> Eco
+                  </span>
+                )}
+              </div>
             </div>
             <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3">
               Import All
@@ -625,8 +717,33 @@ function Shell() {
               <input type="text" className="input" placeholder="Client X" value={newLabel} onChange={e => setNewLabel(e.target.value)} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1">Interval (min)</label>
-              <input type="number" className="input" value={newInterval} onChange={e => setNewInterval(Number(e.target.value))} />
+              <label className="block text-sm font-medium text-zinc-400 mb-1">Interval</label>
+              <select
+                className="input bg-black/30 w-full"
+                value={newInterval}
+                onChange={e => setNewInterval(Number(e.target.value))}
+              >
+                {[30, 60, 120, 240, 360, 720, 1440].map(m => (
+                  <option key={m} value={m}>{m} min</option>
+                ))}
+              </select>
+              <div className="flex items-center gap-1.5 text-xs mt-1">
+                {newInterval === 30 && (
+                  <span className="text-amber-400 flex items-center gap-1">
+                    <span>●</span> High Load
+                  </span>
+                )}
+                {newInterval >= 60 && newInterval <= 360 && (
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <span>●</span> Optimal
+                  </span>
+                )}
+                {newInterval > 360 && (
+                  <span className="text-sky-400 flex items-center gap-1">
+                    <span>●</span> Eco
+                  </span>
+                )}
+              </div>
             </div>
             <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3">
               Start Monitoring

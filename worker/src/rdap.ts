@@ -1,3 +1,4 @@
+import { connect } from "cloudflare:sockets";
 import type { Env } from "./types";
 
 export type RdapResult =
@@ -45,6 +46,153 @@ const TLD_SPECIFIC_PROVIDERS: Record<string, string> = {
   "tr": "https://rdap.iana.org/domain/"
 };
 
+const WHOIS_SERVERS: Record<string, string> = {
+  "com": "whois.verisign-grs.com",
+  "net": "whois.verisign-grs.com",
+  "org": "whois.pir.org",
+  "info": "whois.afilias.net",
+  "biz": "whois.nic.biz",
+  "co": "whois.nic.co",
+  "io": "whois.nic.io",
+  "us": "whois.nic.us",
+  "cc": "whois.nic.cc",
+  "tv": "whois.nic.tv",
+  "tr": "whois.nic.tr",
+  "me": "whois.nic.me",
+  "sk": "whois.sk-nic.sk",
+  "ch": "whois.nic.ch",
+  "li": "whois.nic.ch",
+  "ru": "whois.tcinet.ru",
+  "uk": "whois.nic.uk",
+  "de": "whois.denic.de"
+};
+
+async function queryWhoisTcp(server: string, query: string): Promise<string> {
+  const socket = connect({ hostname: server, port: 43 });
+  const writer = socket.writable.getWriter();
+  const encoder = new TextEncoder();
+  await writer.write(encoder.encode(`${query}\r\n`));
+  writer.releaseLock();
+
+  const reader = socket.readable.getReader();
+  const decoder = new TextDecoder();
+  let result = "";
+  
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("WHOIS query timed out")), 5000)
+  );
+
+  const readPromise = (async () => {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (value) {
+        result += decoder.decode(value, { stream: !done });
+      }
+      if (done) {
+        break;
+      }
+    }
+    return result;
+  })();
+
+  try {
+    return await Promise.race([readPromise, timeoutPromise]);
+  } finally {
+    try {
+      await socket.close();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+async function getWhoisServerForTld(tld: string): Promise<string> {
+  if (WHOIS_SERVERS[tld]) {
+    return WHOIS_SERVERS[tld];
+  }
+  try {
+    const raw = await queryWhoisTcp("whois.iana.org", tld);
+    const match = raw.match(/whois:\s+([a-z0-9.-]+)/i);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  } catch {
+    // Ignore error
+  }
+  return "whois.iana.org";
+}
+
+function parseWhoisAvailability(text: string): "available" | "registered" {
+  const lowercase = text.toLowerCase();
+  const availablePhrases = [
+    "no match for",
+    "not found",
+    "no matching record",
+    "no entries found",
+    "is free",
+    "available",
+    "not registered",
+    "no object found",
+    "status: free",
+    "no data found",
+    "domain not found"
+  ];
+  if (availablePhrases.some(phrase => lowercase.includes(phrase))) {
+    return "available";
+  }
+  return "registered";
+}
+
+function parseWhoisExpiry(text: string): number | null {
+  const expiryRegexes = [
+    /(?:expiry|expiration|expires|expires\s+on)\s*[:\s]+([^\r\n]+)/i,
+    /registry\s+expiry\s+date\s*[:\s]+([^\r\n]+)/i,
+  ];
+  for (const regex of expiryRegexes) {
+    const match = text.match(regex);
+    if (match && match[1]) {
+      const dateStr = match[1].trim();
+      try {
+        const time = Date.parse(dateStr);
+        if (!isNaN(time)) {
+          return Math.floor(time / 1000);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+  return null;
+}
+
+export async function checkDomainWhois(domain: string): Promise<RdapResult> {
+  const tld = domain.split(".").pop() || "";
+  try {
+    const server = await getWhoisServerForTld(tld);
+    const raw = await queryWhoisTcp(server, domain);
+
+    const status = parseWhoisAvailability(raw);
+    if (status === "available") {
+      return { ok: true, status: "available", http: 200 };
+    }
+
+    const expiresAt = parseWhoisExpiry(raw);
+    const payload: any = { whois: true, raw };
+    if (expiresAt) {
+      payload.events = [
+        {
+          eventAction: "expiration",
+          eventDate: new Date(expiresAt * 1000).toISOString()
+        }
+      ];
+    }
+
+    return { ok: true, status: "registered", http: 200, payload };
+  } catch (e: any) {
+    return { ok: false, status: "error", http: 500, error: `WHOIS fallback failed: ${e.message}` };
+  }
+}
+
 export async function checkDomain(env: Env, domainIn: string): Promise<RdapResult> {
   const domain = normalizeDomain(domainIn);
   const tld = domain.split(".").pop() || "";
@@ -52,11 +200,9 @@ export async function checkDomain(env: Env, domainIn: string): Promise<RdapResul
   // 1. Pick a base URL
   let base = env.RDAP_BASE?.trim();
   if (!base) {
-    // If it's a popular TLD, try direct provider first to avoid rdap.org redirection overhead
     if (TLD_SPECIFIC_PROVIDERS[tld]) {
       base = TLD_SPECIFIC_PROVIDERS[tld];
     } else {
-      // Rotate between public general providers
       base = RDAP_PROVIDERS[Math.floor(Math.random() * RDAP_PROVIDERS.length)];
     }
   }
@@ -66,37 +212,39 @@ export async function checkDomain(env: Env, domainIn: string): Promise<RdapResul
   // [SAFE-02] Smart Jitter: Add a random delay (100ms - 1500ms) to avoid pattern detection
   await new Promise(r => setTimeout(r, 100 + Math.random() * 1400));
 
-  // Conservative headers
-  const resp = await fetch(url, {
-    headers: {
-      "accept": "application/json",
-      "user-agent": "Mozilla/5.0 (compatible; BackorderMonitor/1.0; +https://gnn.tr)"
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        "accept": "application/json",
+        "user-agent": "Mozilla/5.0 (compatible; BackorderMonitor/1.0; +https://gnn.tr)"
+      }
+    });
+
+    const http = resp.status;
+
+    if (http === 404) {
+      return { ok: true, status: "available", http };
     }
-  });
-
-  const http = resp.status;
-
-  if (http === 404) {
-    // Most RDAP servers return 404 when not found (interpreted as available)
-    return { ok: true, status: "available", http };
-  }
-  if (http === 429) {
-    const ra = resp.headers.get("retry-after");
-    const retryAfterSec = ra ? parseInt(ra, 10) : undefined;
-    return { ok: false, status: "rate_limited", http, retryAfterSec: Number.isFinite(retryAfterSec) ? retryAfterSec : undefined };
-  }
-  if (http >= 200 && http < 300) {
-    // Registered
-    // Keep payload small — only parse if needed
-    let payload: unknown;
-    try {
-      payload = await resp.json();
-    } catch {
-      payload = undefined;
+    if (http === 429) {
+      const ra = resp.headers.get("retry-after");
+      const retryAfterSec = ra ? parseInt(ra, 10) : undefined;
+      return { ok: false, status: "rate_limited", http, retryAfterSec: Number.isFinite(retryAfterSec) ? retryAfterSec : undefined };
     }
-    return { ok: true, status: "registered", http, payload };
-  }
+    if (http >= 200 && http < 300) {
+      let payload: unknown;
+      try {
+        payload = await resp.json();
+      } catch {
+        payload = undefined;
+      }
+      return { ok: true, status: "registered", http, payload };
+    }
 
-  const txt = await resp.text().catch(() => "");
-  return { ok: false, status: "error", http, error: txt.slice(0, 600) || `RDAP unexpected status: ${http}` };
+    // RDAP returned a non-success status code (e.g. 501, 500, 503) -> Try WHOIS fallback
+    return await checkDomainWhois(domain);
+
+  } catch (e: any) {
+    // Network/DNS error fetching RDAP -> Try WHOIS fallback
+    return await checkDomainWhois(domain);
+  }
 }

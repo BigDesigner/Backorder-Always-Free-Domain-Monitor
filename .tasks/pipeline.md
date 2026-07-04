@@ -25,9 +25,10 @@ The repository has been successfully migrated to the **Project Memory Bank** str
 
 
 ### 2. Feature Roadmap (From Project State)
-- [ ] Integrate safety/health score indicator for check frequencies.
-- [ ] Support WHOIS fallback when RDAP is missing/fails for specific TLDs.
+- [x] Integrate safety/health score indicator for check frequencies. (Implemented in frontend table and add modals with optimal/high load/eco markers).
+- [x] Support WHOIS fallback when RDAP is missing/fails for specific TLDs. (Implemented backend query over TCP using cloudflare:sockets, including dynamic TLD parser and expiry date scanner).
 - [ ] Implement multi-user support (low priority).
+
 
 ---
 

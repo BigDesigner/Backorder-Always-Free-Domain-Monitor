@@ -19,8 +19,10 @@ The repository has been successfully migrated to the **Project Memory Bank** str
 ## 📋 Backlog & Planned Roadmaps
 
 ### 1. Verification of Local Setup
-- [ ] Install dependencies in `frontend` and `worker` directories.
-- [ ] Run typechecks and linters locally to verify no pre-existing issues.
+- [x] Install dependencies in `frontend` and `worker` directories. [Verified]
+- [x] Run typechecks and linters locally to verify no pre-existing issues. (Typechecks and linters pass successfully for both frontend and worker).
+
+
 
 ### 2. Feature Roadmap (From Project State)
 - [ ] Integrate safety/health score indicator for check frequencies.

@@ -24,3 +24,14 @@ This document lists tracked bug reports, runtime environment caveats, and D1 dat
 * **Status**: Open / Handled in Code
 * **Description**: Standard RDAP redirection (e.g. via RIPE) frequently fails or returns 530/1016 error codes for Turkish `.tr` (Trabis) domains.
 * **Suggested Action/Mitigation**: Explicitly bypass standard RDAP registry redirects and route `.tr` queries directly to `rdap.iana.org`.
+
+## Active Bug Reports / Test Failures
+
+### 1. Missing ESLint Configuration in Worker Directory (Resolved)
+* **Type**: Lint Failure
+* **Confidence**: Verified
+* **Status**: Resolved
+* **Description**: Running `npm run lint` in the `worker` directory failed because ESLint v10.3.0 requires a configuration file, which was missing.
+* **Suggested Action/Mitigation**: Installed `typescript-eslint` and `@eslint/js`, created `eslint.config.js` in the `worker` directory, and fixed a `no-useless-assignment` issue in `rdap.ts`.
+
+

@@ -88,7 +88,7 @@ export async function checkDomain(env: Env, domainIn: string): Promise<RdapResul
   if (http >= 200 && http < 300) {
     // Registered
     // Keep payload small — only parse if needed
-    let payload: unknown = undefined;
+    let payload: unknown;
     try {
       payload = await resp.json();
     } catch {

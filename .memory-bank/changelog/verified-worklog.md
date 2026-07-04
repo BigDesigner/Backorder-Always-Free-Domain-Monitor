@@ -8,6 +8,8 @@ This file tracks the historical development milestones, verified releases, and c
 #### 🛠️ Tooling & Linting Coherence
 - **Missing ESLint Setup**: Configured a modern `eslint.config.js` for TypeScript + ESLint v10 in the `worker` directory, correcting missing configuration errors.
 - **Lint Issue Fix**: Fixed a `no-useless-assignment` warning inside `rdap.ts` to ensure build scripts pass without syntax errors.
+- **Dependency Upgrades**: Group-bumped and validated all backend, frontend, and workflow dependencies to their latest stable configurations (including Hono v4.12.21, Vite v8.1.3, Wrangler v4.92.0, ESLint v10.4.0, PostCSS v8.5.15, actions/checkout@v7, and cloudflare/wrangler-action@v4) to clean up repository vulnerability alerts.
+
 
 #### 📊 Safety/Health Score Indicators
 - **Interval Health Dots**: Added a text-based indicator with colored dots (`●`) inside the main domain dashboard and adding modals (Single and Bulk) to give users feedback on check interval risks:

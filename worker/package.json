@@ -11,15 +11,15 @@
     "migrate:remote": "wrangler d1 migrations apply backorder_d1"
   },
   "dependencies": {
-    "hono": "^4.12.27"
+    "hono": "^4.12.28"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260708.1",
     "@eslint/js": "^10.0.1",
-    "@types/node": "^25.9.4",
+    "@types/node": "^26.1.0",
     "eslint": "^10.6.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.62.1",
+    "typescript-eslint": "^8.63.0",
     "wrangler": "^4.108.0"
   }
 }

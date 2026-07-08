@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "engine": {
+    "mode": "autonomous-sandbox",
+    "enforce_guardrails": true
+  },
+  "boundaries": {
+    "filesystem": {
+      "restricted_paths": [
+        ".specs/constitution.md",
+        ".specs/boundary-conditions.md",
+        ".memory-bank/system-coherence.md"
+      ],
+      "write_allowed_paths": [
+        "frontend/src/",
+        "worker/src/",
+        ".tasks/",
+        ".memory-bank/adr/",
+        ".memory-bank/changelog/",
+        ".memory-bank/audits/",
+        ".memory-bank/bugs/",
+        ".archive/docs-migration/"
+      ]
+    },
+    "automation": {
+      "auto_commit_on_success": false,
+      "require_explicit_commit_approval": true,
+      "validation_is_recommended_not_automatic": true
+    }
+  }
+}

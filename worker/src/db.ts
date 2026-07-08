@@ -17,7 +17,8 @@ export async function ensureAdmin(env: Env): Promise<void> {
   if (!email || !pass) return;
 
   // Fast path: SHA-256 fingerprint check (<1ms) to avoid PBKDF2 on every request
-  const fingerprint = await quickHash(pass);
+  const appSecret = env.AUTH_SECRET || env.ADMIN_PASSWORD;
+  const fingerprint = await quickHash(pass + appSecret);
   const stored = await env.DB.prepare("SELECT value FROM settings WHERE key = 'admin_pw_fingerprint'")
     .first<{value: string}>();
 
@@ -31,7 +32,7 @@ export async function ensureAdmin(env: Env): Promise<void> {
   // Slow path: password changed or first boot — run PBKDF2
   const { pbkdf2Hash, b64, randomBytes } = await import("./crypto");
   const salt = randomBytes(16);
-  const hash = await pbkdf2Hash(pass, salt);
+  const hash = await pbkdf2Hash(pass, salt, appSecret);
 
   if (row?.id) {
     // Password was rotated in Cloudflare secrets — update hash & kill all sessions

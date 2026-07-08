@@ -6,6 +6,7 @@ export type Env = {
   TELEGRAM_CHAT_ID?: string;
   DISCORD_WEBHOOK_URL?: string;
   RDAP_BASE?: string;
+  AUTH_SECRET?: string;
 };
 
 export type DomainRow = {

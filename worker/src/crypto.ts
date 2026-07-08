@@ -1,7 +1,7 @@
 /**
  * Password hashing for Workers: PBKDF2-SHA256
  */
-export async function pbkdf2Hash(password: string, saltBytes: Uint8Array, iterations = 100_000): Promise<Uint8Array> {
+export async function pbkdf2Hash(password: string, saltBytes: Uint8Array, appSecret?: string, iterations = 100_000): Promise<Uint8Array> {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
@@ -20,7 +20,21 @@ export async function pbkdf2Hash(password: string, saltBytes: Uint8Array, iterat
     keyMaterial,
     256
   );
-  return new Uint8Array(bits);
+  
+  if (!appSecret) {
+    return new Uint8Array(bits);
+  }
+
+  // SEC-07: HMAC-SHA256 fingerprinting with application secret
+  const hmacKey = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(appSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const fingerprint = await crypto.subtle.sign("HMAC", hmacKey, bits);
+  return new Uint8Array(fingerprint);
 }
 
 export function b64(bytes: Uint8Array): string {

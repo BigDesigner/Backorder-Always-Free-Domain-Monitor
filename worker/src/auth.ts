@@ -39,7 +39,8 @@ export async function login(env: Env, emailIn: string, password: string): Promis
 
   const salt = unb64(user.salt_b64);
   const expected = unb64(user.hash_b64);
-  const got = await pbkdf2Hash(password, salt);
+  const appSecret = env.AUTH_SECRET || env.ADMIN_PASSWORD;
+  const got = await pbkdf2Hash(password, salt, appSecret);
   if (!timingSafeEqual(expected, got)) return null;
 
   const token = randomToken();

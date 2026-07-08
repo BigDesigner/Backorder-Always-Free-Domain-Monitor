@@ -53,17 +53,19 @@ app.post("/api/login", async (c) => {
   const body = await c.req.json().catch(() => null) as { email?: string; password?: string } | null;
   if (!body?.email || !body?.password) return c.json({ ok: false, error: "Missing email/password" }, 400);
 
-  // SEC-08: Rate limit — max 5 failed attempts per minute
+  // SEC-08: Rate limit — max 5 failed attempts per minute per IP
+  const rawIp = c.req.header("CF-Connecting-IP") || c.req.header("X-Forwarded-For") || "127.0.0.1";
+  const ip = rawIp.replace(/[%_]/g, ""); // SEC-11: Sanitize IP to prevent SQL wildcard injection
   const recentFails = await c.env.DB.prepare(
-    "SELECT COUNT(*) as cnt FROM events WHERE type = 'auth' AND message LIKE 'Failed login%' AND created_at > ?"
-  ).bind(nowSec() - 60).first<{cnt: number}>();
+    "SELECT COUNT(*) as cnt FROM events WHERE type = 'auth' AND message LIKE ? AND created_at > ?"
+  ).bind(`Failed login attempt% IP: ${ip}`, nowSec() - 60).first<{cnt: number}>();
   if (recentFails && recentFails.cnt >= 5) {
     return c.json({ ok: false, error: "Too many attempts. Try again later." }, 429);
   }
 
   const res = await doLogin(c.env, body.email, body.password);
   if (!res) {
-    await addEvent(c.env, null, "auth", `Failed login attempt for ${body.email}`);
+    await addEvent(c.env, null, "auth", `Failed login attempt for ${body.email} IP: ${ip}`);
     return c.json({ ok: false, error: "Invalid credentials" }, 401);
   }
 
@@ -102,7 +104,9 @@ app.post("/api/domains", async (c) => {
 
   const body = await c.req.json().catch(() => null) as { domain?: string; label?: string; intervalMin?: number } | null;
   const domain = (body?.domain || "").trim().toLowerCase();
-  if (!domain || !domain.includes(".")) return c.json({ ok: false, error: "Invalid domain" }, 400);
+  if (!domain || !domain.includes(".") || !/^[a-z0-9.-]+$/.test(domain)) {
+    return c.json({ ok: false, error: "Invalid domain format. Only alphanumeric, hyphens, and dots are allowed." }, 400);
+  }
 
   const existing = await getDomainByName(c.env, domain);
   if (existing) return c.json({ ok: false, error: "Domain already exists" }, 409);
@@ -220,7 +224,7 @@ app.post("/api/bulk-domains", async (c) => {
 
   for (const raw of rawDomains) {
     const domain = raw.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "");
-    if (!domain || !domain.includes(".")) {
+    if (!domain || !domain.includes(".") || !/^[a-z0-9.-]+$/.test(domain)) {
       results.errors.push(`Invalid: ${raw}`);
       continue;
     }

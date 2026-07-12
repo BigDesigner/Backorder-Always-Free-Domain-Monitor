@@ -1,4 +1,4 @@
-export const API_BASE = "https://api.gnn.tr";
+export const API_BASE = import.meta.env.VITE_API_BASE || "https://api.gnn.tr";
 
 export type Domain = {
   id: number;
@@ -36,7 +36,9 @@ async function req<T>(path: string, opts: RequestInit = {}): Promise<T> {
   const data = await r.json().catch(() => ({}));
   if (!r.ok) {
     const msg = (data && (data.error || data.message)) || `HTTP ${r.status}`;
-    throw new Error(msg);
+    const err = new Error(msg) as Error & { status?: number };
+    err.status = r.status;
+    throw err;
   }
   return data as T;
 }
@@ -44,7 +46,7 @@ async function req<T>(path: string, opts: RequestInit = {}): Promise<T> {
 export const api = {
   health: () => req<{ok:boolean;ts:string}>(`/api/health`),
   me: () => req<{ok:boolean;user:{id:number;email:string}}>(`/api/me`),
-  login: (email: string, password: string) => req<{ok:boolean;token:string}>(`/api/login`, { method: "POST", body: JSON.stringify({ email, password }) }),
+  login: (email: string, password: string) => req<{ok:boolean}>(`/api/login`, { method: "POST", body: JSON.stringify({ email, password }) }),
   logout: () => req<{ok:boolean}>(`/api/logout`, { method: "POST", body: JSON.stringify({}) }),
   domains: () => req<{ok:boolean;domains:Domain[];now:number}>(`/api/domains`),
   addDomain: (domain: string, label?: string, intervalMin?: number) => req<{ok:boolean;domain:Domain}>(`/api/domains`, { method: "POST", body: JSON.stringify({ domain, label, intervalMin }) }),

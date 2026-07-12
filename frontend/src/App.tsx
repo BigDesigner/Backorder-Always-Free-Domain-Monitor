@@ -28,14 +28,6 @@ function GlobalFooter() {
 }
 
 function Shell() {
-	useEffect(() => {
-  const t = setInterval(() => {
-    window.location.reload();
-  }, 300_000); // 300 seconds
-
-  return () => clearInterval(t);
-}, []);
-	
   const toast = useToast();
 
   const [authed, setAuthed] = useState(false);
@@ -65,8 +57,11 @@ function Shell() {
       const e = await api.events(250);
       setEvents(e.events || []);
     } catch (err) {
-      console.error("Refresh failed", err);
-      setAuthed(false);
+      if ((err as any)?.status === 401) {
+        setAuthed(false);
+      } else {
+        console.error("Refresh failed", err);
+      }
     }
   }
 
@@ -264,112 +259,6 @@ function Shell() {
       <TopBar />
       
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
-
-      <Modal open={addOpen} title="Add Domain" onClose={() => setAddOpen(false)}>
-        <div className="flex bg-black/20 p-1 rounded-lg mb-4">
-          <button 
-            onClick={() => setBulkMode(false)}
-            className={`flex-1 py-1.5 text-xs rounded-md transition ${!bulkMode ? 'bg-white/10 shadow-sm' : 'text-zinc-500'}`}
-          >
-            Single
-          </button>
-          <button 
-            onClick={() => setBulkMode(true)}
-            className={`flex-1 py-1.5 text-xs rounded-md transition ${bulkMode ? 'bg-white/10 shadow-sm' : 'text-zinc-500'}`}
-          >
-            Bulk
-          </button>
-        </div>
-
-        {bulkMode ? (
-          <form onSubmit={handleBulkAdd} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1 text-xs uppercase tracking-wider">Domains (one per line)</label>
-              <textarea 
-                className="input min-h-[150px] resize-none text-sm" 
-                placeholder="google.com&#10;apple.com, example.net"
-                value={bulkInput}
-                onChange={e => setBulkInput(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1 text-xs uppercase tracking-wider">Interval</label>
-              <select
-                className="input bg-black/30 w-full"
-                value={newInterval}
-                onChange={e => setNewInterval(Number(e.target.value))}
-              >
-                {[30, 60, 120, 240, 360, 720, 1440].map(m => (
-                  <option key={m} value={m}>{m} min</option>
-                ))}
-              </select>
-              <div className="flex items-center gap-1.5 text-xs mt-1">
-                {newInterval === 30 && (
-                  <span className="text-amber-400 flex items-center gap-1">
-                    <span>●</span> High Load
-                  </span>
-                )}
-                {newInterval >= 60 && newInterval <= 360 && (
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <span>●</span> Optimal
-                  </span>
-                )}
-                {newInterval > 360 && (
-                  <span className="text-sky-400 flex items-center gap-1">
-                    <span>●</span> Eco
-                  </span>
-                )}
-              </div>
-            </div>
-            <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3 font-bold">
-              Import List
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleAdd} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1 text-xs uppercase tracking-wider">Domain Name</label>
-              <input type="text" className="input" placeholder="example.com" value={newDomain} onChange={e => setNewDomain(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1 text-xs uppercase tracking-wider">Label (Optional)</label>
-              <input type="text" className="input" placeholder="Client X" value={newLabel} onChange={e => setNewLabel(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-1 text-xs uppercase tracking-wider">Interval</label>
-              <select
-                className="input bg-black/30 w-full"
-                value={newInterval}
-                onChange={e => setNewInterval(Number(e.target.value))}
-              >
-                {[30, 60, 120, 240, 360, 720, 1440].map(m => (
-                  <option key={m} value={m}>{m} min</option>
-                ))}
-              </select>
-              <div className="flex items-center gap-1.5 text-xs mt-1">
-                {newInterval === 30 && (
-                  <span className="text-amber-400 flex items-center gap-1">
-                    <span>●</span> High Load
-                  </span>
-                )}
-                {newInterval >= 60 && newInterval <= 360 && (
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <span>●</span> Optimal
-                  </span>
-                )}
-                {newInterval > 360 && (
-                  <span className="text-sky-400 flex items-center gap-1">
-                    <span>●</span> Eco
-                  </span>
-                )}
-              </div>
-            </div>
-            <button type="submit" className="btn w-full bg-white text-black hover:bg-zinc-200 border-none py-3 font-bold">
-              Start Monitoring
-            </button>
-          </form>
-        )}
-      </Modal>
 
       <div className="mx-auto max-w-6xl px-4 py-8">
         {tab === "dashboard" && (

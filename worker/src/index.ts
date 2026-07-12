@@ -10,18 +10,28 @@ const app = new Hono<{ Bindings: Env }>();
 app.use("*", cors({
   origin: (origin) => {
     if (!origin) return null;
-    const url = new URL(origin);
-    const host = url.hostname;
-    // Strictly allow only gnn.tr and its subdomains + localhost for development
-    if (host === "gnn.tr" || host.endsWith(".gnn.tr") || host.endsWith(".pages.dev") || host === "localhost") {
-      return origin;
+    try {
+      const url = new URL(origin);
+      const host = url.hostname;
+      // Strictly allow only gnn.tr, our own Pages project, and localhost for development
+      if (
+        host === "gnn.tr" ||
+        host.endsWith(".gnn.tr") ||
+        host === "backorder-frontend.pages.dev" ||
+        host.endsWith(".backorder-frontend.pages.dev") || // Pages preview deploy'ları
+        host === "localhost" ||
+        host === "127.0.0.1"
+      ) {
+        return origin;
+      }
+      return null;
+    } catch {
+      return null;
     }
-    return null;
   },
   credentials: true,
   allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
-  exposeHeaders: ["Set-Cookie"],
   maxAge: 86400,
 }));
 
@@ -37,12 +47,10 @@ app.use("*", async (c, next) => {
 });
 
 app.get("/api/health", async (c) => {
-  await ensureAdmin(c.env);
   return c.json({ ok: true, ts: new Date().toISOString() });
 });
 
 app.get("/api/me", async (c) => {
-  await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);
   return c.json({ ok: true, user });
@@ -80,7 +88,6 @@ app.post("/api/login", async (c) => {
 });
 
 app.post("/api/logout", async (c) => {
-  await ensureAdmin(c.env);
   const token = getSessionTokenFromRequest(c.req.raw);
   if (token) await doLogout(c.env, token);
   // SEC-02: Match login cookie flags exactly
@@ -89,7 +96,6 @@ app.post("/api/logout", async (c) => {
 });
 
 app.get("/api/domains", async (c) => {
-  await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);
 
@@ -98,7 +104,6 @@ app.get("/api/domains", async (c) => {
 });
 
 app.post("/api/domains", async (c) => {
-  await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);
 
@@ -123,14 +128,13 @@ app.post("/api/domains", async (c) => {
   const row = await getDomainByName(c.env, domain);
   if (row) {
     await addEvent(c.env, row.id, "info", `Domain added by ${user.email}: ${domain} (interval ${intervalMin}m)`);
-    // Run scheduler immediately after add
-    await runScheduler(c.env);
+    // Run scheduler immediately after add — don't block the response on it
+    c.executionCtx.waitUntil(runScheduler(c.env));
   }
   return c.json({ ok: true, domain: row });
 });
 
 app.patch("/api/domains/:id", async (c) => {
-  await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);
 
@@ -167,8 +171,8 @@ app.patch("/api/domains/:id", async (c) => {
   await c.env.DB.prepare(`UPDATE domains SET ${updates.join(", ")} WHERE id = ?`).bind(...binds).run();
 
   if (body?.forceCheck) {
-    // Run scheduler AFTER the database has been updated
-    await runScheduler(c.env);
+    // Run scheduler AFTER the database has been updated — don't block the response on it
+    c.executionCtx.waitUntil(runScheduler(c.env));
   }
 
   await addEvent(c.env, id, "info", `Domain updated by ${user.email}: ${d.domain}`);
@@ -178,7 +182,6 @@ app.patch("/api/domains/:id", async (c) => {
 
 // Reliable deletion endpoint - handles both ID and domain name for safety
 app.post("/api/domains/:id/delete", async (c) => {
-  await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false, error: "Unauthorized" }, 401);
 
@@ -207,13 +210,12 @@ app.post("/api/domains/:id/delete", async (c) => {
 });
 
 app.post("/api/bulk-domains", async (c) => {
-  await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);
 
   const body = await c.req.json().catch(() => null) as { domains?: string[]; intervalMin?: number } | null;
   const rawDomains = body?.domains || [];
-  const intervalMin = body?.intervalMin || 60;
+  const intervalMin = Math.max(30, Math.min(24*60, Math.floor(body?.intervalMin ?? 60)));
 
   if (!Array.isArray(rawDomains) || rawDomains.length === 0) {
     return c.json({ ok: false, error: "No domains provided" }, 400);
@@ -256,7 +258,6 @@ app.post("/api/bulk-domains", async (c) => {
 });
 
 app.get("/api/events", async (c) => {
-  await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);
 
@@ -266,7 +267,6 @@ app.get("/api/events", async (c) => {
 });
 
 app.post("/api/test-notify", async (c) => {
-  await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);
 
@@ -276,7 +276,6 @@ app.post("/api/test-notify", async (c) => {
 });
 
 app.post("/api/maintenance/clean-events", async (c) => {
-  await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);
 
@@ -292,7 +291,6 @@ app.post("/api/maintenance/clean-events", async (c) => {
 });
 
 app.post("/api/maintenance/reset", async (c) => {
-  await ensureAdmin(c.env);
   const user = await requireAuth(c.env, c.req.raw);
   if (!user) return c.json({ ok: false }, 401);
 

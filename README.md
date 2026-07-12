@@ -63,9 +63,10 @@ Choose the option that fits your setup:
 #### Option B: Apache / cPanel / Shared Hosting
 1. Go to the `/frontend` folder: `cd ../frontend`
 2. Update the `VITE_API_BASE` in `.env.production` with your Worker's URL.
-3. Build the project: `npm run build`
-4. **Upload:** Take the contents of the `dist/` folder and upload them to your server's `public_html`.
-5. *Note: Ensure your `.htaccess` file is uploaded to handle SPA routing.*
+3. If you're hosting under a subdirectory (e.g. `yourdomain.com/backorder/`), set `VITE_BASE_PATH=/backorder/` in `.env.production`. If you're hosting at the domain root, remove that line (or set it to `/`).
+4. Build the project: `npm run build`
+5. **Upload:** Take the contents of the `dist/` folder and upload them to your server's `public_html`.
+6. *Note: Ensure your `.htaccess` file is uploaded to handle SPA routing.*
 
 ---
 
@@ -95,8 +96,8 @@ When you clone this repo, it contains default domains like `api.gnn.tr`. You **m
 | **Worker Name** | `worker/wrangler.toml` | Change `name = "backorder-domain-monitor"` to your preferred name. |
 | **Database ID** | `worker/wrangler.toml` | Replace `database_id` with your own D1 ID from Step 1. |
 | **Frontend API Link** | `frontend/.env.production` | Change `VITE_API_BASE` to your deployed Worker URL. |
-| **CORS Security** | `worker/src/index.ts` | **Line 16:** Update the allowed hostnames (e.g., `yourdomain.com`) to prevent unauthorized access. |
-| **RDAP Headers** | `worker/src/rdap.ts` | **Line 68:** Update the `user-agent` URL for professional identification. |
+| **CORS Security** | `worker/src/index.ts` | Update the allowed hostnames in the CORS `origin` allowlist (e.g., your own domain and Pages project) to prevent unauthorized access. |
+| **RDAP Headers** | `worker/src/rdap.ts` | Update the `user-agent` header URL used in the RDAP fetch request for professional identification. |
 
 ---
 
@@ -108,6 +109,9 @@ To understand why we use this setup:
 2.  **The Pages (Frontend):** This is the face. It's a static React app that calls the Worker.
 3.  **Custom Domain (Proxy):** By using a custom domain (like `api.yourdomain.com`) for your Worker, you bypass browser blocks that normally stop `*.workers.dev` links from working.
 
+> [!NOTE]
+> Privacy-focused browsers (Safari ITP, Firefox strict Enhanced Tracking Protection) block third-party cookies. Because the session cookie is issued cross-site when the frontend lives on `*.pages.dev` and the API on your own domain, login may fail in these browsers. For the most reliable experience, host the frontend and API under the **same site** (e.g. `app.yourdomain.com` + `api.yourdomain.com`).
+
 ---
 
 ## ✨ Why this system is better?
@@ -115,7 +119,7 @@ To understand why we use this setup:
 | Feature | Benefit |
 | :--- | :--- |
 | **Adaptive Backoff** | Automatically slows down if RDAP servers block you, then speeds back up. |
-| **.tr Specialist** | Handles Turkish domains natively using specific IANA routing. |
+| **.tr Specialist** | Handles Turkish domains natively via the official TRABİS WHOIS registry (`whois.trabis.gov.tr`), since `.tr` has no public RDAP service. |
 | **Bulk Import** | Paste 100 domains at once; it handles the staggering for you. |
 | **Safety Lock** | Destructive actions require a "Type to Confirm" pass-phrase. |
 | **No Database Costs** | Uses Cloudflare D1 which is free for millions of rows. |

@@ -1,6 +1,7 @@
 name = "backorder-domain-monitor"
 main = "src/index.ts"
 compatibility_date = "2025-02-01"
+# İlk kurulum için true; custom domain (api.*) bağladıktan sonra false yapmanız önerilir.
 workers_dev = true
 
 [triggers]

@@ -90,7 +90,7 @@ export async function runScheduler(env: Env): Promise<{ checked: number; due: nu
         if (res.status === "rate_limited") {
           const prevErrs = d.consecutive_errors ?? 0;
           const step = clamp(prevErrs + 1, 1, 4); // 1..4
-          const delay = [hours(6), hours(12), hours(24), hours(24)][step - 1];
+          const delay = Math.max([hours(6), hours(12), hours(24), hours(24)][step - 1], res.retryAfterSec ?? 0);
           const next = now + delay;
 
           await env.DB.prepare(
